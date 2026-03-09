@@ -524,11 +524,12 @@ const firebaseConfig = {
     let app;
     let currentPage = 'dashboard';
 
-    // Initialize Firebase
-    async function initializeFirebase() {
-      try {
-        app = firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
+// Initialize Firebase
+async function initializeFirebase() {
+  try {
+    const Firebase = window.firebase;
+    app = Firebase.initializeApp(firebaseConfig);
+    db = Firebase.firestore();
         
         // Set security rules for development
         console.log('Firebase initialized successfully');
