@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guest Review Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --color-primary: #2563eb;
@@ -386,12 +386,6 @@
       gap: 1rem;
     }
 
-    .chart-container {
-      position: relative;
-      height: 300px;
-      margin-bottom: 1.5rem;
-    }
-
     .loading {
       display: flex;
       align-items: center;
@@ -421,27 +415,6 @@
       padding: 3rem 1.5rem;
       text-align: center;
       color: var(--color-text-secondary);
-    }
-
-    .alert {
-      padding: 1rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .alert-success {
-      background-color: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--color-success);
-    }
-
-    .alert-danger {
-      background-color: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: var(--color-danger);
     }
 
     .table-container {
@@ -510,28 +483,24 @@
   </div>
 
   <script>
-    // Firebase Configuration - UPDATE WITH YOUR CREDENTIALS
-const firebaseConfig = {
-  apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
-  authDomain: "guestreviewdashboard.firebaseapp.com",
-  projectId: "guestreviewdashboard",
-  storageBucket: "guestreviewdashboard.firebasestorage.app",
-  messagingSenderId: "726657937453",
-  appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
-};
+    // Firebase Configuration - UPDATED WITH YOUR CREDENTIALS
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
+      authDomain: "guestreviewdashboard.firebaseapp.com",
+      projectId: "guestreviewdashboard",
+      storageBucket: "guestreviewdashboard.firebasestorage.app",
+      messagingSenderId: "726657937453",
+      appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
+    };
 
     let db;
-    let app;
     let currentPage = 'dashboard';
 
-// Initialize Firebase
-async function initializeFirebase() {
-  try {
-    const Firebase = window.firebase;
-    app = Firebase.initializeApp(firebaseConfig);
-    db = Firebase.firestore();
-        
-        // Set security rules for development
+    // Initialize Firebase
+    function initializeFirebase() {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
         console.log('Firebase initialized successfully');
         updateStatus('Connected', 'success');
         return true;
@@ -633,29 +602,24 @@ async function initializeFirebase() {
 
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Getting Started</h3>
+            <h3 class="card-title">Welcome to Guest Review Dashboard</h3>
           </div>
-          <p>Welcome to your Guest Review Dashboard. Use the navigation menu to:</p>
-          <ul style="margin-top: 1rem; margin-left: 2rem; color: var(--color-text-secondary);">
-            <li>Manage your properties</li>
-            <li>Add and track guest reviews</li>
-            <li>Create action plans for issues</li>
-            <li>Monitor performance metrics</li>
-          </ul>
+          <p>Your professional operational intelligence dashboard is ready!</p>
+          <p style="margin-top: 1rem; color: var(--color-text-secondary);">Use the navigation menu to manage properties, add reviews, and track action plans.</p>
         </div>
       `;
 
       // Load dashboard data
       try {
-        const reviews = await db.collection('reviews').get();
-        const properties = await db.collection('properties').get();
+        const reviewsSnapshot = await db.collection('reviews').get();
+        const propertiesSnapshot = await db.collection('properties').get();
         
-        let totalReviews = reviews.docs.length;
-        let totalProperties = properties.docs.length;
+        let totalReviews = reviewsSnapshot.size;
+        let totalProperties = propertiesSnapshot.size;
         let lowRatings = 0;
         let totalRating = 0;
 
-        reviews.forEach(doc => {
+        reviewsSnapshot.forEach(doc => {
           const rating = doc.data().rating || 0;
           totalRating += rating;
           if (rating <= 2) lowRatings++;
@@ -694,12 +658,11 @@ async function initializeFirebase() {
                   <th>Type</th>
                   <th>Reviews</th>
                   <th>Avg Rating</th>
-                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="propertiesTableBody">
-                <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                <tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td></tr>
               </tbody>
             </table>
           </div>
@@ -770,7 +733,7 @@ async function initializeFirebase() {
         const tbody = document.getElementById('propertiesTableBody');
         
         if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No properties yet</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No properties yet</td></tr>';
           return;
         }
 
@@ -784,9 +747,8 @@ async function initializeFirebase() {
               <td>${data.unitType}</td>
               <td>${data.totalReviews || 0}</td>
               <td>${(data.averageRating || 0).toFixed(1)}</td>
-              <td><span class="badge badge-success">${data.status || 'Active'}</span></td>
               <td>
-                <button class="btn btn-secondary" onclick="deleteProperty('${doc.id}')" style="font-size: 12px;">Delete</button>
+                <button class="btn btn-danger" onclick="deleteProperty('${doc.id}')" style="font-size: 12px;">Delete</button>
               </td>
             </tr>
           `;
@@ -821,17 +783,18 @@ async function initializeFirebase() {
         status: 'Active',
         totalReviews: 0,
         averageRating: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
       try {
         await db.collection('properties').add(data);
         closePropertyModal();
+        alert('Property added successfully!');
         await renderPropertiesPage(document.getElementById('mainContent'));
-        alert('Property added successfully');
       } catch (error) {
         alert('Error: ' + error.message);
+        console.error('Save error:', error);
       }
     }
 
@@ -873,12 +836,6 @@ async function initializeFirebase() {
             <form id="reviewForm" onsubmit="saveReview(event)">
               <div class="modal-body">
                 <div class="form-group">
-                  <label class="form-label">Property</label>
-                  <select name="propertyId" class="form-select" id="propertySelect" required>
-                    <option value="">Select property</option>
-                  </select>
-                </div>
-                <div class="form-group">
                   <label class="form-label">Guest Name</label>
                   <input type="text" name="guestName" class="form-input" required />
                 </div>
@@ -914,10 +871,6 @@ async function initializeFirebase() {
                     <option value="Negative">Negative</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Review Date</label>
-                  <input type="date" name="reviewDate" class="form-input" required />
-                </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
@@ -929,29 +882,12 @@ async function initializeFirebase() {
       `;
 
       container.innerHTML = html;
-      await loadPropertySelect();
       await loadReviews();
-    }
-
-    async function loadPropertySelect() {
-      try {
-        const snapshot = await db.collection('properties').get();
-        const select = document.getElementById('propertySelect');
-        
-        snapshot.forEach(doc => {
-          const option = document.createElement('option');
-          option.value = doc.id;
-          option.textContent = doc.data().propertyName;
-          select.appendChild(option);
-        });
-      } catch (error) {
-        console.error('Error loading properties:', error);
-      }
     }
 
     async function loadReviews() {
       try {
-        const snapshot = await db.collection('reviews').orderBy('reviewDate', 'desc').get();
+        const snapshot = await db.collection('reviews').orderBy('createdAt', 'desc').get();
         const reviewsList = document.getElementById('reviewsList');
         
         if (snapshot.empty) {
@@ -991,8 +927,6 @@ async function initializeFirebase() {
     }
 
     function openReviewModal() {
-      const today = new Date().toISOString().split('T')[0];
-      document.querySelector('input[name="reviewDate"]').value = today;
       document.getElementById('reviewModal').classList.add('active');
     }
 
@@ -1009,25 +943,24 @@ async function initializeFirebase() {
       const ratingCategory = rating <= 2 ? 'Low' : rating <= 4 ? 'Medium' : 'High';
 
       const data = {
-        propertyId: form.propertyId.value,
         guestName: form.guestName.value,
         rating: rating,
         ratingCategory: ratingCategory,
         platform: form.platform.value,
         comment: form.comment.value,
         sentiment: form.sentiment.value,
-        reviewDate: new Date(form.reviewDate.value),
-        createdAt: new Date(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         archived: false
       };
 
       try {
         await db.collection('reviews').add(data);
         closeReviewModal();
+        alert('Review added successfully!');
         await renderReviewsPage(document.getElementById('mainContent'));
-        alert('Review added successfully');
       } catch (error) {
         alert('Error: ' + error.message);
+        console.error('Save error:', error);
       }
     }
 
@@ -1063,12 +996,11 @@ async function initializeFirebase() {
                   <th>Impact</th>
                   <th>Assigned To</th>
                   <th>Status</th>
-                  <th>Deadline</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="actionsTableBody">
-                <tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                <tr><td colspan="5" style="text-align: center; padding: 2rem;">Loading...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1112,8 +1044,11 @@ async function initializeFirebase() {
                   <textarea name="actionDescription" class="form-textarea" required></textarea>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Deadline</label>
-                  <input type="date" name="deadline" class="form-input" required />
+                  <label class="form-label">Status</label>
+                  <select name="status" class="form-select">
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                  </select>
                 </div>
               </div>
               <div class="modal-footer">
@@ -1135,14 +1070,13 @@ async function initializeFirebase() {
         const tbody = document.getElementById('actionsTableBody');
         
         if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No action plans yet</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No action plans yet</td></tr>';
           return;
         }
 
         let rows = '';
         snapshot.forEach(doc => {
           const data = doc.data();
-          const deadline = data.deadline ? new Date(data.deadline.toDate()).toLocaleDateString() : '-';
           
           rows += `
             <tr>
@@ -1150,10 +1084,8 @@ async function initializeFirebase() {
               <td><span class="badge badge-${data.impactLevel === 'High' ? 'danger' : 'warning'}">${data.impactLevel}</span></td>
               <td>${data.assignedTo}</td>
               <td><span class="badge badge-${data.status === 'Completed' ? 'success' : 'primary'}">${data.status || 'Pending'}</span></td>
-              <td>${deadline}</td>
               <td>
-                <button class="btn btn-secondary" onclick="updateActionStatus('${doc.id}', 'Completed')" style="font-size: 12px;">Complete</button>
-                <button class="btn btn-danger" onclick="deleteAction('${doc.id}')" style="font-size: 12px; margin-left: 0.5rem;">Delete</button>
+                <button class="btn btn-danger" onclick="deleteAction('${doc.id}')" style="font-size: 12px;">Delete</button>
               </td>
             </tr>
           `;
@@ -1166,9 +1098,6 @@ async function initializeFirebase() {
     }
 
     function openActionModal() {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 7);
-      document.querySelector('input[name="deadline"]').value = tomorrow.toISOString().split('T')[0];
       document.getElementById('actionModal').classList.add('active');
     }
 
@@ -1186,32 +1115,20 @@ async function initializeFirebase() {
         impactLevel: form.impactLevel.value,
         assignedTo: form.assignedTo.value,
         actionDescription: form.actionDescription.value,
-        deadline: new Date(form.deadline.value),
-        status: 'Pending',
+        status: form.status.value,
         frequency: 1,
-        createdAt: new Date(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         resolvedAt: null
       };
 
       try {
         await db.collection('actionPlans').add(data);
         closeActionModal();
-        await renderActionsPage(document.getElementById('mainContent'));
-        alert('Action plan created successfully');
-      } catch (error) {
-        alert('Error: ' + error.message);
-      }
-    }
-
-    async function updateActionStatus(id, status) {
-      try {
-        await db.collection('actionPlans').doc(id).update({
-          status: status,
-          resolvedAt: status === 'Completed' ? new Date() : null
-        });
+        alert('Action plan created successfully!');
         await renderActionsPage(document.getElementById('mainContent'));
       } catch (error) {
         alert('Error: ' + error.message);
+        console.error('Save error:', error);
       }
     }
 
@@ -1230,12 +1147,12 @@ async function initializeFirebase() {
     async function initializeApp() {
       try {
         initializeTheme();
-        const success = await initializeFirebase();
+        const success = initializeFirebase();
         
         if (success) {
           navigateTo('dashboard');
         } else {
-          alert('Failed to connect to Firebase. Check your credentials.');
+          alert('Failed to initialize Firebase');
         }
       } catch (error) {
         console.error('Initialization error:', error);
@@ -1256,7 +1173,6 @@ async function initializeFirebase() {
     window.openActionModal = openActionModal;
     window.closeActionModal = closeActionModal;
     window.saveAction = saveAction;
-    window.updateActionStatus = updateActionStatus;
     window.deleteAction = deleteAction;
 
     // Start
