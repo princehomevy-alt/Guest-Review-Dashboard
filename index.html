@@ -9,23 +9,25 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1e40af;
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --secondary: #7c3aed;
+      --accent: #06b6d4;
       --success: #10b981;
-      --danger: #ef4444;
+      --danger: #f43f5e;
       --warning: #f59e0b;
       --bg: #ffffff;
-      --bg-light: #f8fafc;
-      --text: #0f172a;
-      --text-gray: #64748b;
+      --bg-secondary: #f8fafc;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
       --border: #e2e8f0;
     }
 
     [data-theme="dark"] {
       --bg: #0f172a;
-      --bg-light: #1e293b;
-      --text: #f1f5f9;
-      --text-gray: #cbd5e1;
+      --bg-secondary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
       --border: #334155;
     }
 
@@ -36,152 +38,160 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: all 0.3s ease;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      transition: all 0.2s;
     }
 
-    .container {
+    .app-container {
       display: grid;
-      grid-template-columns: 240px 1fr;
+      grid-template-columns: 260px 1fr;
       min-height: 100vh;
     }
 
-    /* SIDEBAR */
     .sidebar {
-      background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
-      color: white;
-      padding: 2rem 1.5rem;
-      position: fixed;
-      width: 240px;
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
       height: 100vh;
-      overflow-y: auto;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
     }
 
-    .logo {
+    .sidebar-brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 2rem;
-      font-size: 20px;
-      font-weight: 700;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
     }
 
-    .logo-icon {
+    .sidebar-brand-icon {
       width: 40px;
       height: 40px;
-      background: rgba(255,255,255,0.2);
       border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       display: flex;
       align-items: center;
       justify-content: center;
+      color: white;
       font-weight: bold;
     }
 
-    .nav {
+    .sidebar-nav {
+      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
     .nav-item {
-      padding: 12px 16px;
-      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
       transition: all 0.2s;
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.9);
-      border: none;
-      text-align: left;
     }
 
     .nav-item:hover {
-      background: rgba(255,255,255,0.2);
-      color: white;
+      color: var(--primary);
     }
 
     .nav-item.active {
-      background: rgba(255,255,255,0.3);
+      background-color: var(--primary);
       color: white;
-      font-weight: 600;
     }
 
-    /* HEADER */
-    .header {
-      grid-column: 2;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 1.5rem 2rem;
+    .sidebar-footer {
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
       display: flex;
-      justify-content: space-between;
+      gap: 1rem;
       align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .header-title {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
     }
 
     .theme-toggle {
-      width: 44px;
-      height: 44px;
-      border-radius: 8px;
+      background-color: var(--bg-secondary);
       border: 1px solid var(--border);
-      background: var(--bg-light);
+      border-radius: 6px;
+      padding: 10px;
       cursor: pointer;
-      font-size: 18px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
     }
 
-    .theme-toggle:hover {
-      background: var(--border);
-    }
-
-    /* MAIN CONTENT */
-    .main {
-      grid-column: 2;
-      padding: 2rem;
+    .main-content {
+      padding: 1.5rem;
       overflow-y: auto;
-      background: var(--bg);
     }
 
-    .metrics {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+    .page-header {
+      margin-bottom: 1.5rem;
     }
 
-    .metric {
-      background: linear-gradient(135deg, var(--primary), #0ea5e9);
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .metric-card {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: white;
       padding: 1.5rem;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .metric.success {
+    .metric-card.success {
       background: linear-gradient(135deg, var(--success), #059669);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
-    .metric.danger {
-      background: linear-gradient(135deg, var(--danger), #dc2626);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    .metric-card.danger {
+      background: linear-gradient(135deg, var(--danger), #be123c);
     }
 
-    .metric.warning {
+    .metric-card.warning {
       background: linear-gradient(135deg, var(--warning), #d97706);
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .metric-card.accent {
+      background: linear-gradient(135deg, var(--accent), #0891b2);
     }
 
     .metric-label {
@@ -193,101 +203,50 @@
     }
 
     .metric-value {
-      font-size: 36px;
-      font-weight: 700;
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 8px;
     }
 
-    .charts {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .chart-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .chart-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text);
-    }
-
-    .chart-container {
-      position: relative;
-      height: 280px;
-    }
-
-    .card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      margin-bottom: 2rem;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text);
-    }
+    .grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
     .btn {
-      padding: 10px 18px;
+      padding: 10px 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
     }
 
     .btn-primary {
-      background: var(--primary);
+      background-color: var(--primary);
       color: white;
-      margin-bottom: 1rem;
+      margin-bottom: 20px;
     }
 
     .btn-primary:hover {
-      background: var(--primary-dark);
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      background-color: var(--primary-dark);
     }
 
     .btn-secondary {
-      background: var(--bg-light);
-      color: var(--text);
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
       border: 1px solid var(--border);
+      width: auto;
     }
 
     .btn-danger {
-      background: var(--danger);
+      background-color: var(--danger);
       color: white;
-      font-size: 12px;
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: white;
-      font-size: 12px;
+      width: auto;
     }
 
     .table {
@@ -296,241 +255,101 @@
       font-size: 14px;
     }
 
+    .table thead {
+      background-color: var(--bg-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+
     .table th {
-      padding: 12px;
+      padding: 1.5rem;
       text-align: left;
       font-weight: 600;
-      background: var(--bg-light);
-      border-bottom: 2px solid var(--border);
-      color: var(--text);
+      text-transform: uppercase;
+      font-size: 12px;
     }
 
     .table td {
-      padding: 12px;
+      padding: 1.5rem;
       border-bottom: 1px solid var(--border);
     }
 
     .table tbody tr:hover {
-      background: var(--bg-light);
+      background-color: var(--bg-secondary);
     }
 
     .badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       padding: 4px 12px;
-      border-radius: 20px;
+      border-radius: 16px;
       font-size: 12px;
       font-weight: 600;
     }
 
-    .badge-primary {
-      background: rgba(37, 99, 235, 0.1);
-      color: var(--primary);
-    }
+    .badge-success { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .badge-danger { background-color: rgba(244, 63, 94, 0.1); color: var(--danger); }
+    .badge-warning { background-color: rgba(245, 158, 11, 0.1); color: var(--warning); }
+    .badge-primary { background-color: rgba(79, 70, 229, 0.1); color: var(--primary); }
+    .badge-accent { background-color: rgba(6, 182, 212, 0.1); color: var(--accent); }
 
-    .badge-success {
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--success);
-    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 999; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
 
-    .badge-danger {
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--danger);
-    }
+    .modal { background-color: var(--bg); border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
 
-    .badge-warning {
-      background: rgba(245, 158, 11, 0.1);
-      color: var(--warning);
-    }
+    .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
+    .form-label { font-weight: 500; margin-bottom: 0.5rem; font-size: 14px; }
+    .form-input, .form-select, .form-textarea { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; background-color: var(--bg); color: var(--text-primary); }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    .form-textarea { min-height: 100px; resize: vertical; }
 
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1.5rem; text-align: center; color: var(--text-secondary); }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 1.5rem; gap: 1rem; }
+    .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 
-    .modal.active {
-      display: flex;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .modal-content {
-      background: var(--bg);
-      border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-
-    .modal-header {
-      padding: 1.5rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header h2 {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: var(--text-gray);
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-    }
-
-    .modal-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-
-    .form-input,
-    .form-select,
-    .form-textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 14px;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .form-textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      color: var(--text-gray);
-    }
-
-    .empty-state p {
-      font-size: 14px;
-    }
-
-    .platforms {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .chart-container { position: relative; height: 300px; margin-bottom: 1.5rem; }
+    .table-container { overflow-x: auto; }
+    .platform-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
     @media (max-width: 768px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: fixed;
-        width: 100%;
-        height: auto;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 1rem;
-        display: flex;
-        gap: 1rem;
-        flex-direction: row;
-        overflow-x: auto;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-      }
-
-      .logo {
-        display: none;
-      }
-
-      .nav {
-        flex-direction: row;
-      }
-
-      .header {
-        grid-column: 1;
-      }
-
-      .main {
-        grid-column: 1;
-        padding-bottom: 100px;
-      }
-
-      .charts {
-        grid-template-columns: 1fr;
-      }
-
-      .metrics {
-        grid-template-columns: 1fr;
-      }
+      .app-container { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; width: 260px; height: 100vh; z-index: 100; }
+      .main-content { padding: 1rem; }
+      .grid-2, .grid-4 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="app-container">
     <aside class="sidebar">
-      <div class="logo">
-        <div class="logo-icon">📊</div>
-        <span>Reviews</span>
-      </div>
-      <nav class="nav">
-        <button class="nav-item active" onclick="navigateTo('dashboard')">Dashboard</button>
-        <button class="nav-item" onclick="navigateTo('properties')">Properties</button>
-        <button class="nav-item" onclick="navigateTo('reviews')">Reviews</button>
-        <button class="nav-item" onclick="navigateTo('actions')">Actions</button>
-      </nav>
-    </aside>
-
-    <div>
-      <header class="header">
-        <h1 class="header-title" id="pageTitle">Dashboard</h1>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-      </header>
-
-      <main class="main" id="content">
-        <div style="text-align: center; padding: 3rem;">
-          <div style="font-size: 48px; margin-bottom: 1rem;">⏳</div>
-          <p>Loading...</p>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">D</div>
+        <div>
+          <div style="font-size: 14px; font-weight: bold;">Reviews</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Dashboard</div>
         </div>
-      </main>
-    </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="dashboardBtn" onclick="navigateTo('dashboard')">Dashboard</button>
+        <button class="nav-item" id="propertiesBtn" onclick="navigateTo('properties')">Properties</button>
+        <button class="nav-item" id="reviewsBtn" onclick="navigateTo('reviews')">Reviews</button>
+        <button class="nav-item" id="actionsBtn" onclick="navigateTo('actions')">Action Plans</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">M</button>
+      </div>
+    </aside>
+    
+    <main class="main-content" id="mainContent">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100%;"><div class="loading"><div class="spinner"></div><span>Loading...</span></div></div>
+    </main>
   </div>
 
   <script>
@@ -544,381 +363,188 @@
     };
 
     let db;
-
+    
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
 
     function toggleTheme() {
       const html = document.documentElement;
-      const current = html.getAttribute('data-theme') || 'light';
-      const next = current === 'light' ? 'dark' : 'light';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      document.querySelector('.theme-toggle').textContent = next === 'light' ? '🌙' : '☀️';
+      const currentTheme = html.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      document.getElementById('themeToggle').textContent = newTheme === 'light' ? 'M' : 'L';
     }
 
-    function setActiveNav(page) {
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      event.target.classList.add('active');
+    function initializeTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('themeToggle').textContent = savedTheme === 'light' ? 'M' : 'L';
     }
 
-    async function navigateTo(page) {
-      setActiveNav(page);
-      const titles = { dashboard: 'Dashboard', properties: 'Properties', reviews: 'Reviews', actions: 'Actions' };
-      document.getElementById('pageTitle').textContent = titles[page];
-
-      switch(page) {
-        case 'dashboard': renderDashboard(); break;
-        case 'properties': renderProperties(); break;
-        case 'reviews': renderReviews(); break;
-        case 'actions': renderActions(); break;
-      }
+    function navigateTo(page) {
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(page + 'Btn').classList.add('active');
+      
+      if (page === 'dashboard') renderDashboard();
+      else if (page === 'properties') renderPropertiesPage();
+      else if (page === 'reviews') renderReviewsPage();
+      else if (page === 'actions') renderActionsPage();
     }
 
     async function renderDashboard() {
-      let html = `
-        <div class="metrics">
-          <div class="metric">
-            <div class="metric-label">Total Reviews</div>
-            <div class="metric-value" id="totalReviews">0</div>
-          </div>
-          <div class="metric success">
-            <div class="metric-label">Avg Rating</div>
-            <div class="metric-value" id="avgRating">0.0</div>
-          </div>
-          <div class="metric danger">
-            <div class="metric-label">Low Ratings</div>
-            <div class="metric-value" id="lowRatings">0</div>
-          </div>
-          <div class="metric warning">
-            <div class="metric-label">Properties</div>
-            <div class="metric-value" id="totalProps">0</div>
-          </div>
+      const container = document.getElementById('mainContent');
+      container.innerHTML = `
+        <div class="page-header"><h1 class="page-title">Executive Dashboard</h1></div>
+        <div class="grid grid-4">
+          <div class="metric-card"><div class="metric-label">Total Reviews</div><div class="metric-value" id="totalReviews">0</div></div>
+          <div class="metric-card success"><div class="metric-label">Average Rating</div><div class="metric-value" id="avgRating">0.0</div></div>
+          <div class="metric-card danger"><div class="metric-label">Low Ratings</div><div class="metric-value" id="lowRatings">0</div></div>
+          <div class="metric-card accent"><div class="metric-label">Properties</div><div class="metric-value" id="totalProperties">0</div></div>
         </div>
-
-        <div class="charts">
-          <div class="chart-card">
-            <div class="chart-title">Reviews by Platform</div>
-            <div class="chart-container">
-              <canvas id="platformChart"></canvas>
-            </div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-title">Rating Distribution</div>
-            <div class="chart-container">
-              <canvas id="ratingChart"></canvas>
-            </div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-title">Top Properties</div>
-            <div class="chart-container">
-              <canvas id="propertiesChart"></canvas>
-            </div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-title">Issues by Category</div>
-            <div class="chart-container">
-              <canvas id="issuesChart"></canvas>
-            </div>
-          </div>
+        <div class="grid grid-2">
+          <div class="card"><div class="card-header"><h3 class="card-title">Reviews by Platform</h3></div><div class="chart-container"><canvas id="platformChart"></canvas></div></div>
+          <div class="card"><div class="card-header"><h3 class="card-title">Rating Distribution</h3></div><div class="chart-container"><canvas id="ratingChart"></canvas></div></div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card"><div class="card-header"><h3 class="card-title">Top Properties</h3></div><div class="chart-container"><canvas id="propertiesChart"></canvas></div></div>
+          <div class="card"><div class="card-header"><h3 class="card-title">Issues</h3></div><div class="chart-container"><canvas id="issuesChart"></canvas></div></div>
         </div>
       `;
 
-      document.getElementById('content').innerHTML = html;
-
       try {
-        const reviews = await db.collection('reviews').get();
-        const properties = await db.collection('properties').get();
-        const actions = await db.collection('actionPlans').get();
+        const [reviewsSnap, propertiesSnap, actionsSnap] = await Promise.all([
+          db.collection('reviews').get(),
+          db.collection('properties').get(),
+          db.collection('actionPlans').get()
+        ]);
 
-        let totalRev = 0, totalRating = 0, lowRat = 0;
-        let platformCounts = { 'Airbnb': 0, 'Booking.com': 0, 'Vrbo': 0, 'Direct': 0 };
-        let ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        let propCounts = {};
-        let issueCounts = {};
+        let totalRev = 0, totalRat = 0, lowRat = 0;
+        let platCount = { 'Airbnb': 0, 'Booking.com': 0, 'Vrbo': 0, 'Direct': 0 };
+        let ratCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let propCount = {}, issCount = {};
 
-        reviews.forEach(doc => {
+        reviewsSnap.forEach(doc => {
           const r = doc.data().rating || 0;
-          totalRating += r;
+          totalRat += r;
           totalRev++;
           if (r <= 2) lowRat++;
           const p = doc.data().platform || 'Direct';
-          if (platformCounts.hasOwnProperty(p)) platformCounts[p]++;
-          ratingCounts[r]++;
+          if (platCount.hasOwnProperty(p)) platCount[p]++;
+          ratCount[r]++;
         });
 
-        properties.forEach(doc => {
-          propCounts[doc.data().propertyName] = doc.data().totalReviews || 0;
+        propertiesSnap.forEach(doc => {
+          propCount[doc.data().propertyName] = doc.data().totalReviews || 0;
         });
 
-        actions.forEach(doc => {
+        actionsSnap.forEach(doc => {
           const i = doc.data().issueCategory || 'Other';
-          issueCounts[i] = (issueCounts[i] || 0) + 1;
+          issCount[i] = (issCount[i] || 0) + 1;
         });
 
         document.getElementById('totalReviews').textContent = totalRev;
-        document.getElementById('avgRating').textContent = totalRev > 0 ? (totalRating / totalRev).toFixed(1) : '0.0';
+        document.getElementById('avgRating').textContent = totalRev > 0 ? (totalRat / totalRev).toFixed(1) : '0.0';
         document.getElementById('lowRatings').textContent = lowRat;
-        document.getElementById('totalProps').textContent = properties.size;
+        document.getElementById('totalProperties').textContent = propertiesSnap.size;
 
         setTimeout(() => {
           new Chart(document.getElementById('platformChart'), {
             type: 'bar',
-            data: {
-              labels: Object.keys(platformCounts),
-              datasets: [{
-                label: 'Reviews',
-                data: Object.values(platformCounts),
-                backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'],
-                borderRadius: 6
-              }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            data: { labels: Object.keys(platCount), datasets: [{ label: 'Reviews', data: Object.values(platCount), backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#06b6d4'], borderRadius: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
           });
-
           new Chart(document.getElementById('ratingChart'), {
             type: 'doughnut',
-            data: {
-              labels: ['1★', '2★', '3★', '4★', '5★'],
-              datasets: [{ data: [ratingCounts[1], ratingCounts[2], ratingCounts[3], ratingCounts[4], ratingCounts[5]], backgroundColor: ['#ef4444', '#f59e0b', '#fbbf24', '#a3e635', '#10b981'] }]
-            },
+            data: { labels: ['1★', '2★', '3★', '4★', '5★'], datasets: [{ data: [ratCount[1], ratCount[2], ratCount[3], ratCount[4], ratCount[5]], backgroundColor: ['#f43f5e', '#f59e0b', '#fbbf24', '#a3e635', '#10b981'] }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
           });
-
-          const sorted = Object.entries(propCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+          const topProps = Object.entries(propCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
           new Chart(document.getElementById('propertiesChart'), {
             type: 'bar',
-            data: {
-              labels: sorted.map(p => p[0]),
-              datasets: [{ label: 'Reviews', data: sorted.map(p => p[1]), backgroundColor: '#2563eb', borderRadius: 6 }]
-            },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            data: { labels: topProps.map(p => p[0]), datasets: [{ label: 'Reviews', data: topProps.map(p => p[1]), backgroundColor: '#4f46e5', borderRadius: 6 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
           });
-
           new Chart(document.getElementById('issuesChart'), {
             type: 'bar',
-            data: {
-              labels: Object.keys(issueCounts),
-              datasets: [{ label: 'Issues', data: Object.values(issueCounts), backgroundColor: '#ef4444', borderRadius: 6 }]
-            },
+            data: { labels: Object.keys(issCount), datasets: [{ label: 'Issues', data: Object.values(issCount), backgroundColor: '#f43f5e', borderRadius: 6 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
           });
         }, 100);
-      } catch (error) {
-        console.error('Error:', error);
-      }
+      } catch (error) { console.error(error); }
     }
 
-    async function renderProperties() {
-      let html = `
-        <button class="btn btn-primary" onclick="openModal('propertyModal')">+ Add Property</button>
-        <div class="card">
-          <div class="card-title">All Properties</div>
-          <table class="table">
-            <thead>
-              <tr><th>Name</th><th>Location</th><th>Type</th><th>Platforms</th><th>Reviews</th><th>Rating</th><th>Action</th></tr>
-            </thead>
-            <tbody id="propTable"></tbody>
-          </table>
-        </div>
-
-        <div id="propertyModal" class="modal">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h2>Add Property</h2>
-              <button class="modal-close" onclick="closeModal('propertyModal')">✕</button>
-            </div>
-            <form id="propForm" onsubmit="saveProperty(event)" class="modal-body">
-              <div class="form-group"><label class="form-label">Name</label><input class="form-input" name="propertyName" required></div>
-              <div class="form-group"><label class="form-label">Location</label><input class="form-input" name="location" required></div>
-              <div class="form-group"><label class="form-label">City</label><input class="form-input" name="city" required></div>
-              <div class="form-group"><label class="form-label">Type</label><select class="form-select" name="unitType" required><option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option></select></div>
-              <div class="form-group"><label class="form-label">Owner</label><input class="form-input" name="owner" required></div>
-            </form>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" onclick="closeModal('propertyModal')">Cancel</button>
-              <button class="btn btn-primary" onclick="document.getElementById('propForm').submit()">Save</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('content').innerHTML = html;
-
-      const props = await db.collection('properties').get();
+    async function renderPropertiesPage() {
+      const container = document.getElementById('mainContent');
+      container.innerHTML = `<div class="page-header"><h1 class="page-title">Properties</h1></div><button class="btn btn-primary" onclick="openPropertyModal()">Add Property</button><div class="card"><table class="table"><thead><tr><th>Name</th><th>Location</th><th>Type</th><th>Platforms</th><th>Reviews</th><th>Rating</th><th>Action</th></tr></thead><tbody id="propertiesTableBody"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody></table></div><div id="propertyModal" class="modal-overlay"><div class="modal"><div class="modal-header"><h3 class="modal-title">Add Property</h3><button class="modal-close" onclick="closePropertyModal()">X</button></div><form id="propertyForm" onsubmit="saveProperty(event)"><div class="modal-body"><div class="form-group"><label class="form-label">Property Name</label><input type="text" name="propertyName" class="form-input" required></div><div class="form-group"><label class="form-label">Location</label><input type="text" name="location" class="form-input" required></div><div class="form-group"><label class="form-label">City</label><input type="text" name="city" class="form-input" required></div><div class="form-group"><label class="form-label">Unit Type</label><select name="unitType" class="form-input" required><option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option></select></div><div class="form-group"><label class="form-label">Owner</label><input type="text" name="owner" class="form-input" required></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form></div></div>`;
+      
+      const snapshot = await db.collection('properties').get();
       let rows = '';
-      props.forEach(doc => {
+      snapshot.forEach(doc => {
         const d = doc.data();
-        rows += `<tr>
-          <td><strong>${d.propertyName}</strong></td>
-          <td>${d.location}</td>
-          <td>${d.unitType}</td>
-          <td><div class="platforms"><span class="badge badge-primary">Airbnb</span><span class="badge badge-primary">Booking</span><span class="badge badge-primary">Vrbo</span><span class="badge badge-primary">Direct</span></div></td>
-          <td>${d.totalReviews || 0}</td>
-          <td>${(d.averageRating || 0).toFixed(1)}</td>
-          <td><button class="btn btn-danger" onclick="deleteDoc('properties', '${doc.id}')">Delete</button></td>
-        </tr>`;
+        rows += `<tr><td><strong>${d.propertyName}</strong></td><td>${d.location}</td><td>${d.unitType}</td><td><div class="platform-badges"><span class="badge badge-primary">Airbnb</span><span class="badge badge-primary">Booking</span><span class="badge badge-primary">Vrbo</span><span class="badge badge-accent">Direct</span></div></td><td>${d.totalReviews || 0}</td><td>${(d.averageRating || 0).toFixed(1)}</td><td><button class="btn btn-danger" onclick="deleteProperty('${doc.id}')">Delete</button></td></tr>`;
       });
-      document.getElementById('propTable').innerHTML = rows || '<tr><td colspan="7" class="empty-state">No properties</td></tr>';
+      document.getElementById('propertiesTableBody').innerHTML = rows || '<tr><td colspan="7" style="text-align:center;">No properties</td></tr>';
     }
 
-    async function renderReviews() {
-      let html = `
-        <button class="btn btn-primary" onclick="openModal('reviewModal')">+ Add Review</button>
-        <div class="card" id="reviewsList"></div>
-
-        <div id="reviewModal" class="modal">
-          <div class="modal-content">
-            <div class="modal-header"><h2>Add Review</h2><button class="modal-close" onclick="closeModal('reviewModal')">✕</button></div>
-            <form id="revForm" onsubmit="saveReview(event)" class="modal-body">
-              <div class="form-group"><label class="form-label">Guest Name</label><input class="form-input" name="guestName" required></div>
-              <div class="form-group"><label class="form-label">Rating</label><select class="form-select" name="rating" required><option value="1">1 - Poor</option><option value="2">2 - Fair</option><option value="3">3 - Good</option><option value="4">4 - Very Good</option><option value="5">5 - Excellent</option></select></div>
-              <div class="form-group"><label class="form-label">Platform</label><select class="form-select" name="platform" required><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option></select></div>
-              <div class="form-group"><label class="form-label">Comment</label><textarea class="form-textarea" name="comment"></textarea></div>
-            </form>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" onclick="closeModal('reviewModal')">Cancel</button>
-              <button class="btn btn-primary" onclick="document.getElementById('revForm').submit()">Save</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('content').innerHTML = html;
-
-      const reviews = await db.collection('reviews').orderBy('createdAt', 'desc').get();
-      let html2 = '';
-      reviews.forEach(doc => {
+    async function renderReviewsPage() {
+      const container = document.getElementById('mainContent');
+      container.innerHTML = `<div class="page-header"><h1 class="page-title">Reviews</h1></div><button class="btn btn-primary" onclick="openReviewModal()">Add Review</button><div class="card" id="reviewsList"></div><div id="reviewModal" class="modal-overlay"><div class="modal"><div class="modal-header"><h3 class="modal-title">Add Review</h3><button class="modal-close" onclick="closeReviewModal()">X</button></div><form id="reviewForm" onsubmit="saveReview(event)"><div class="modal-body"><div class="form-group"><label class="form-label">Guest Name</label><input type="text" name="guestName" class="form-input" required></div><div class="form-group"><label class="form-label">Rating</label><select name="rating" class="form-input" required><option value="1">1 - Poor</option><option value="2">2 - Fair</option><option value="3">3 - Good</option><option value="4">4 - Very Good</option><option value="5">5 - Excellent</option></select></div><div class="form-group"><label class="form-label">Platform</label><select name="platform" class="form-input" required><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option></select></div><div class="form-group"><label class="form-label">Comment</label><textarea name="comment" class="form-input"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form></div></div>`;
+      
+      const snapshot = await db.collection('reviews').orderBy('createdAt', 'desc').get();
+      let html = '';
+      snapshot.forEach(doc => {
         const d = doc.data();
         const badgeClass = d.rating <= 2 ? 'danger' : d.rating <= 4 ? 'warning' : 'success';
-        html2 += `<div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <strong>${d.guestName}</strong>
-            <span class="badge badge-${badgeClass}" style="margin-left: 8px;">${d.rating}/5</span>
-            <div style="font-size: 12px; color: var(--text-gray); margin-top: 4px;">${d.platform} • ${d.comment || 'No comment'}</div>
-          </div>
-          <button class="btn btn-danger" onclick="deleteDoc('reviews', '${doc.id}')">Delete</button>
-        </div>`;
+        html += `<div style="padding:1rem;border-bottom:1px solid var(--border);"><div style="display:flex;justify-content:space-between;"><div><strong>${d.guestName}</strong><span class="badge badge-${badgeClass}" style="margin-left:8px;">${d.rating}/5</span></div><button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button></div><p style="margin:8px 0;color:var(--text-secondary);">${d.comment || 'No comment'}</p><span class="badge badge-primary">${d.platform}</span></div>`;
       });
-      document.getElementById('reviewsList').innerHTML = html2 || '<div class="empty-state"><p>No reviews</p></div>';
+      document.getElementById('reviewsList').innerHTML = html || '<div class="empty-state">No reviews</div>';
     }
 
-    async function renderActions() {
-      let html = `
-        <button class="btn btn-primary" onclick="openModal('actionModal')">+ Create Action</button>
-        <div class="card">
-          <table class="table">
-            <thead><tr><th>Issue</th><th>Impact</th><th>Assigned</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="actionTable"></tbody>
-          </table>
-        </div>
-
-        <div id="actionModal" class="modal">
-          <div class="modal-content">
-            <div class="modal-header"><h2>Create Action</h2><button class="modal-close" onclick="closeModal('actionModal')">✕</button></div>
-            <form id="actForm" onsubmit="saveAction(event)" class="modal-body">
-              <div class="form-group"><label class="form-label">Issue</label><select class="form-select" name="issueCategory" required><option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option></select></div>
-              <div class="form-group"><label class="form-label">Impact</label><select class="form-select" name="impactLevel" required><option>Low</option><option>Medium</option><option>High</option></select></div>
-              <div class="form-group"><label class="form-label">Assigned To</label><input class="form-input" name="assignedTo" required></div>
-              <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" name="actionDescription" required></textarea></div>
-            </form>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" onclick="closeModal('actionModal')">Cancel</button>
-              <button class="btn btn-primary" onclick="document.getElementById('actForm').submit()">Create</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('content').innerHTML = html;
-
-      const actions = await db.collection('actionPlans').get();
+    async function renderActionsPage() {
+      const container = document.getElementById('mainContent');
+      container.innerHTML = `<div class="page-header"><h1 class="page-title">Action Plans</h1></div><button class="btn btn-primary" onclick="openActionModal()">Create Action</button><div class="card"><table class="table"><thead><tr><th>Issue</th><th>Impact</th><th>Assigned To</th><th>Status</th><th>Action</th></tr></thead><tbody id="actionsTableBody"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody></table></div><div id="actionModal" class="modal-overlay"><div class="modal"><div class="modal-header"><h3 class="modal-title">Create Action</h3><button class="modal-close" onclick="closeActionModal()">X</button></div><form id="actionForm" onsubmit="saveAction(event)"><div class="modal-body"><div class="form-group"><label class="form-label">Issue</label><select name="issueCategory" class="form-input" required><option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option></select></div><div class="form-group"><label class="form-label">Impact</label><select name="impactLevel" class="form-input" required><option>Low</option><option>Medium</option><option>High</option></select></div><div class="form-group"><label class="form-label">Assigned To</label><input type="text" name="assignedTo" class="form-input" required></div><div class="form-group"><label class="form-label">Description</label><textarea name="actionDescription" class="form-input" required></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button><button type="submit" class="btn btn-primary">Create</button></div></form></div></div>`;
+      
+      const snapshot = await db.collection('actionPlans').get();
       let rows = '';
-      actions.forEach(doc => {
+      snapshot.forEach(doc => {
         const d = doc.data();
-        rows += `<tr>
-          <td><strong>${d.issueCategory}</strong></td>
-          <td><span class="badge badge-${d.impactLevel === 'High' ? 'danger' : 'warning'}">${d.impactLevel}</span></td>
-          <td>${d.assignedTo}</td>
-          <td><span class="badge badge-${d.status === 'Completed' ? 'success' : 'warning'}">${d.status || 'Pending'}</span></td>
-          <td><button class="btn btn-danger" onclick="deleteDoc('actionPlans', '${doc.id}')">Delete</button></td>
-        </tr>`;
+        rows += `<tr><td><strong>${d.issueCategory}</strong></td><td><span class="badge badge-${d.impactLevel === 'High' ? 'danger' : 'warning'}">${d.impactLevel}</span></td><td>${d.assignedTo}</td><td><span class="badge badge-${d.status === 'Completed' ? 'success' : 'warning'}">${d.status || 'Pending'}</span></td><td><button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button></td></tr>`;
       });
-      document.getElementById('actionTable').innerHTML = rows || '<tr><td colspan="5" class="empty-state">No actions</td></tr>';
+      document.getElementById('actionsTableBody').innerHTML = rows || '<tr><td colspan="5" style="text-align:center;">No actions</td></tr>';
     }
 
-    function openModal(id) { document.getElementById(id).classList.add('active'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function openPropertyModal() { document.getElementById('propertyModal').classList.add('active'); }
+    function closePropertyModal() { document.getElementById('propertyModal').classList.remove('active'); document.getElementById('propertyForm').reset(); }
+    async function saveProperty(e) { e.preventDefault(); const form = e.target; await db.collection('properties').add({ propertyName: form.propertyName.value, location: form.location.value, city: form.city.value, unitType: form.unitType.value, platforms: ['Airbnb', 'Booking.com', 'Vrbo', 'Direct'], owner: form.owner.value, status: 'Active', totalReviews: 0, averageRating: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); closePropertyModal(); renderPropertiesPage(); }
+    async function deleteProperty(id) { if (confirm('Delete?')) { await db.collection('properties').doc(id).delete(); renderPropertiesPage(); } }
 
-    async function saveProperty(e) {
-      e.preventDefault();
-      const form = e.target;
-      await db.collection('properties').add({
-        propertyName: form.propertyName.value,
-        location: form.location.value,
-        city: form.city.value,
-        unitType: form.unitType.value,
-        owner: form.owner.value,
-        platforms: ['Airbnb', 'Booking.com', 'Vrbo', 'Direct'],
-        totalReviews: 0,
-        averageRating: 0,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      closeModal('propertyModal');
-      renderProperties();
-    }
+    function openReviewModal() { document.getElementById('reviewModal').classList.add('active'); }
+    function closeReviewModal() { document.getElementById('reviewModal').classList.remove('active'); document.getElementById('reviewForm').reset(); }
+    async function saveReview(e) { e.preventDefault(); const form = e.target; await db.collection('reviews').add({ guestName: form.guestName.value, rating: parseInt(form.rating.value), platform: form.platform.value, comment: form.comment.value, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); closeReviewModal(); renderReviewsPage(); }
+    async function deleteReview(id) { if (confirm('Delete?')) { await db.collection('reviews').doc(id).delete(); renderReviewsPage(); } }
 
-    async function saveReview(e) {
-      e.preventDefault();
-      const form = e.target;
-      const rating = parseInt(form.rating.value);
-      await db.collection('reviews').add({
-        guestName: form.guestName.value,
-        rating: rating,
-        platform: form.platform.value,
-        comment: form.comment.value,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      closeModal('reviewModal');
-      renderReviews();
-    }
-
-    async function saveAction(e) {
-      e.preventDefault();
-      const form = e.target;
-      await db.collection('actionPlans').add({
-        issueCategory: form.issueCategory.value,
-        impactLevel: form.impactLevel.value,
-        assignedTo: form.assignedTo.value,
-        actionDescription: form.actionDescription.value,
-        status: 'Pending',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      closeModal('actionModal');
-      renderActions();
-    }
-
-    async function deleteDoc(col, id) {
-      if (confirm('Delete?')) {
-        await db.collection(col).doc(id).delete();
-        if (col === 'properties') renderProperties();
-        else if (col === 'reviews') renderReviews();
-        else if (col === 'actionPlans') renderActions();
-      }
-    }
+    function openActionModal() { document.getElementById('actionModal').classList.add('active'); }
+    function closeActionModal() { document.getElementById('actionModal').classList.remove('active'); document.getElementById('actionForm').reset(); }
+    async function saveAction(e) { e.preventDefault(); const form = e.target; await db.collection('actionPlans').add({ issueCategory: form.issueCategory.value, impactLevel: form.impactLevel.value, assignedTo: form.assignedTo.value, actionDescription: form.actionDescription.value, status: 'Pending', createdAt: firebase.firestore.FieldValue.serverTimestamp() }); closeActionModal(); renderActionsPage(); }
+    async function deleteAction(id) { if (confirm('Delete?')) { await db.collection('actionPlans').doc(id).delete(); renderActionsPage(); } }
 
     window.navigateTo = navigateTo;
     window.toggleTheme = toggleTheme;
-    window.openModal = openModal;
-    window.closeModal = closeModal;
+    window.openPropertyModal = openPropertyModal;
+    window.closePropertyModal = closePropertyModal;
     window.saveProperty = saveProperty;
+    window.deleteProperty = deleteProperty;
+    window.openReviewModal = openReviewModal;
+    window.closeReviewModal = closeReviewModal;
     window.saveReview = saveReview;
+    window.deleteReview = deleteReview;
+    window.openActionModal = openActionModal;
+    window.closeActionModal = closeActionModal;
     window.saveAction = saveAction;
-    window.deleteDoc = deleteDoc;
+    window.deleteAction = deleteAction;
 
-    const theme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    document.querySelector('.theme-toggle').textContent = theme === 'light' ? '🌙' : '☀️';
-
+    initializeTheme();
     navigateTo('dashboard');
   </script>
 </body>
