@@ -28,22 +28,18 @@
       --color-text-secondary: #cbd5e1;
       --color-border: #334155;
     }
-
     * { margin:0; padding:0; box-sizing:border-box; }
-
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background: var(--color-bg);
       color: var(--color-text-primary);
       transition: all 0.2s;
     }
-
     .app-container {
       display: grid;
       grid-template-columns: 260px 1fr;
       min-height: 100vh;
     }
-
     .sidebar {
       background: var(--color-bg-secondary);
       border-right: 1px solid var(--color-border);
@@ -54,7 +50,6 @@
       position: sticky;
       top: 0;
     }
-
     .sidebar-brand {
       display: flex;
       align-items: center;
@@ -63,7 +58,6 @@
       padding-bottom: 1.5rem;
       border-bottom: 1px solid var(--color-border);
     }
-
     .sidebar-brand-icon {
       width: 40px; height: 40px;
       border-radius: 8px;
@@ -74,14 +68,12 @@
       align-items: center;
       justify-content: center;
     }
-
     .sidebar-nav {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-
     .nav-item {
       padding: 0.9rem 1.4rem;
       border-radius: 6px;
@@ -94,10 +86,8 @@
       text-align: left;
       transition: all 0.15s;
     }
-
     .nav-item:hover { color: var(--color-primary); background: rgba(37,99,235,0.07); }
     .nav-item.active { background: var(--color-primary); color: white; }
-
     .sidebar-footer {
       padding-top: 1.5rem;
       border-top: 1px solid var(--color-border);
@@ -105,7 +95,6 @@
       gap: 12px;
       align-items: center;
     }
-
     .theme-toggle {
       background: var(--color-bg-secondary);
       border: 1px solid var(--color-border);
@@ -117,15 +106,12 @@
       cursor: pointer;
       font-size: 18px;
     }
-
     .main-content {
       padding: 1.5rem 2rem;
       overflow-y: auto;
     }
-
     .page-header { margin-bottom: 1.75rem; }
     .page-title { font-size: 1.8rem; font-weight: 600; }
-
     .card {
       background: var(--color-bg);
       border: 1px solid var(--color-border);
@@ -133,7 +119,6 @@
       padding: 1.5rem;
       margin-bottom: 1.5rem;
     }
-
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -142,16 +127,13 @@
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--color-border);
     }
-
     .card-title { font-size: 1.25rem; font-weight: 600; }
-
     .metric-card {
       color: white;
       padding: 1.5rem;
       border-radius: 12px;
       background: linear-gradient(135deg, var(--color-primary), #0891b2);
     }
-
     .metric-label {
       font-size: 0.8rem;
       opacity: 0.9;
@@ -159,14 +141,11 @@
       letter-spacing: 0.5px;
       margin-bottom: 0.5rem;
     }
-
     .metric-value { font-size: 2.2rem; font-weight: 700; }
-
     .grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
     .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
     .grid-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
     .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-
     .btn {
       padding: 0.6rem 1.1rem;
       border-radius: 6px;
@@ -179,25 +158,21 @@
       gap: 6px;
       transition: all 0.15s;
     }
-
     .btn-primary { background: var(--color-primary); color: white; }
     .btn-primary:hover { background: var(--color-primary-dark); }
     .btn-secondary { background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
     .btn-danger { background: var(--color-danger); color: white; }
-
     .table { width:100%; border-collapse: collapse; font-size: 14px; }
     .table thead {
       background: var(--color-bg-secondary);
       border-bottom: 2px solid var(--color-border);
     }
     .table th, .table td { padding: 1rem; text-align: left; }
-
     .table tbody tr {
       cursor: pointer;
       transition: background 0.15s;
     }
     .table tbody tr:hover { background: rgba(37,99,235,0.07); }
-
     .badge {
       display: inline-flex;
       align-items: center;
@@ -206,102 +181,108 @@
       font-size: 12px;
       font-weight: 600;
     }
-
     .badge-success { background: rgba(16,185,129,0.1); color: var(--color-success); }
     .badge-danger { background: rgba(239,68,68,0.1); color: var(--color-danger); }
     .badge-warning { background: rgba(245,158,11,0.1); color: var(--color-warning); }
     .badge-primary { background: rgba(37,99,235,0.1); color: var(--color-primary); }
-
-    .review-item {
+    .property-card {
       background: var(--color-bg);
       border: 1px solid var(--color-border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .review-item:hover {
-      border-color: var(--color-primary);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    }
-
-    .review-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
       margin-bottom: 1rem;
     }
-
-    .review-guest {
-      font-size: 1.18rem;
-      font-weight: 600;
+    .property-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .property-stats { display: flex; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; gap: 0.3rem; }
+    .stat-label { font-size: 0.8rem; color: var(--color-text-secondary); }
+    .stat-value { font-size: 1.2rem; font-weight: 600; }
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
     }
-
-    .review-meta {
-      margin-top: 0.5rem;
-      font-size: 0.95rem;
-      color: var(--color-text-secondary);
-    }
-
-    .review-comment {
-      line-height: 1.7;
-      margin-bottom: 1.2rem;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .review-footer {
-      font-size: 0.92rem;
-      color: var(--color-text-secondary);
-      display: flex;
-      gap: 1.4rem;
-      flex-wrap: wrap;
-    }
-
-    /* Fix long property names in dropdowns */
-    .form-select {
-      max-width: 100%;
-      white-space: normal !important;
-      word-wrap: break-word !important;
-      overflow-wrap: break-word !important;
-      line-height: 1.5;
-      padding: 0.7rem 2.5rem 0.7rem 0.9rem !important;
-      height: auto;
-      min-height: 42px;
-    }
-
-    .form-select option {
-      white-space: normal !important;
-      word-wrap: break-word !important;
-      overflow-wrap: break-word !important;
-      line-height: 1.5;
-      padding: 10px 14px !important;
-      font-size: 0.96rem;
-    }
-
-    .form-select {
-      appearance: none;
-      background: var(--color-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") no-repeat right 0.75rem center/10px 12px;
-    }
-
-    .modal-body {
-      max-height: 65vh;
-      overflow-y: auto;
-      padding-right: 0.5rem;
-    }
-
+    .modal-overlay.active { display: flex; }
     .modal {
+      background: var(--color-bg);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 520px;
       max-height: 92vh;
       overflow-y: auto;
     }
-
-    .modal-overlay {
-      align-items: flex-start;
-      padding-top: 4vh;
+    .modal-header {
+      padding: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border);
     }
-
+    .modal-title { font-size: 1.25rem; font-weight: 600; }
+    .modal-close { background:none; border:none; font-size: 1.6rem; cursor:pointer; color: var(--color-text-secondary); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end; gap: 1rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { font-weight: 500; margin-bottom: 0.4rem; display: block; font-size: 0.9rem; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .form-textarea { min-height: 110px; resize: vertical; }
+    .chart-container { position: relative; height: 320px; }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 4rem 1rem;
+      color: var(--color-text-secondary);
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .risk-banner {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 1rem;
+    }
+    .review-item {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .review-item:hover {
+      background: rgba(37,99,235,0.07);
+      transform: translateY(-1px);
+    }
     @media (max-width: 992px) {
       .app-container { grid-template-columns: 1fr; }
       .sidebar { position: fixed; z-index: 900; transform: translateX(-100%); transition: transform 0.3s; }
@@ -355,9 +336,18 @@
     </div>
     <form id="propertyForm" onsubmit="saveProperty(event)">
       <div class="modal-body">
-        <div class="form-group"><label class="form-label">Property Name</label><input type="text" name="propertyName" class="form-input" required></div>
-        <div class="form-group"><label class="form-label">Location</label><input type="text" name="location" class="form-input" required></div>
-        <div class="form-group"><label class="form-label">City</label><input type="text" name="city" class="form-input" required></div>
+        <div class="form-group">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="propertyName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-input" required>
+        </div>
         <div class="form-group">
           <label class="form-label">Unit Type</label>
           <select name="unitType" class="form-select" required>
@@ -372,7 +362,10 @@
             <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Owner</label><input type="text" name="owner" class="form-input" required></div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" name="owner" class="form-input" required>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
@@ -391,9 +384,18 @@
     <form id="editPropertyForm" onsubmit="updateProperty(event)">
       <div class="modal-body">
         <input type="hidden" name="propertyId">
-        <div class="form-group"><label class="form-label">Property Name</label><input type="text" name="propertyName" class="form-input" required></div>
-        <div class="form-group"><label class="form-label">Location</label><input type="text" name="location" class="form-input" required></div>
-        <div class="form-group"><label class="form-label">City</label><input type="text" name="city" class="form-input" required></div>
+        <div class="form-group">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="propertyName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-input" required>
+        </div>
         <div class="form-group">
           <label class="form-label">Unit Type</label>
           <select name="unitType" class="form-select" required>
@@ -408,7 +410,10 @@
             <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Owner</label><input type="text" name="owner" class="form-input" required></div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" name="owner" class="form-input" required>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
@@ -433,7 +438,10 @@
             <option value="">Select Property...</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Guest Name</label><input type="text" name="guestName" class="form-input" required></div>
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input type="text" name="guestName" class="form-input" required>
+        </div>
         <div class="form-group">
           <label class="form-label">Rating</label>
           <select name="rating" class="form-select" required>
@@ -449,11 +457,20 @@
           <label class="form-label">Platform</label>
           <select name="platform" class="form-select" required>
             <option value="">Select...</option>
-            <option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Checkout Date *</label><input type="date" name="checkoutDate" class="form-input" required></div>
-        <div class="form-group"><label class="form-label">Comment</label><textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea></div>
+        <div class="form-group">
+          <label class="form-label">Checkout Date *</label>
+          <input type="date" name="checkoutDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comment</label>
+          <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
@@ -476,22 +493,37 @@
           <label class="form-label">Property *</label>
           <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
         </div>
-        <div class="form-group"><label class="form-label">Guest Name</label><input type="text" name="guestName" class="form-input" required></div>
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input type="text" name="guestName" class="form-input" required>
+        </div>
         <div class="form-group">
           <label class="form-label">Rating</label>
           <select name="rating" class="form-select" required>
-            <option value="1">1 - Poor</option><option value="2">2 - Fair</option>
-            <option value="3">3 - Good</option><option value="4">4 - Very Good</option><option value="5">5 - Excellent</option>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Platform</label>
           <select name="platform" class="form-select" required>
-            <option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Checkout Date</label><input type="date" name="checkoutDate" class="form-input" required></div>
-        <div class="form-group"><label class="form-label">Comment</label><textarea name="comment" class="form-textarea"></textarea></div>
+        <div class="form-group">
+          <label class="form-label">Checkout Date</label>
+          <input type="date" name="checkoutDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comment</label>
+          <textarea name="comment" class="form-textarea"></textarea>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
@@ -501,7 +533,7 @@
   </div>
 </div>
 
-<!-- Action Plans Modals -->
+<!-- Action Plans Modal (unchanged) -->
 <div id="actionModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -541,57 +573,6 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
         <button type="submit" class="btn btn-primary">Create</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div id="editActionModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Edit Action Plan</h3>
-      <button class="modal-close" onclick="closeEditActionModal()">×</button>
-    </div>
-    <form id="editActionForm" onsubmit="updateAction(event)">
-      <div class="modal-body">
-        <input type="hidden" name="actionId">
-        <div class="form-group">
-          <label class="form-label">Property *</label>
-          <select id="editActionPropertySelect" name="propertyId" class="form-select" required></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Issue Category</label>
-          <select name="issueCategory" class="form-select" required>
-            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Impact Level</label>
-          <select name="impactLevel" class="form-select" required>
-            <option>Low</option><option>Medium</option><option>High</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Assigned To</label>
-          <input type="text" name="assignedTo" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea name="actionDescription" class="form-textarea" required></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select name="status" class="form-select" required>
-            <option>Pending</option>
-            <option>In Progress</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditActionModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </form>
   </div>
@@ -664,6 +645,9 @@
     else if (page === 'actions') renderActionsPage(content);
   }
 
+  // ─────────────────────────────────────────────
+  // DASHBOARD
+  // ─────────────────────────────────────────────
   async function renderDashboard(container) {
     container.innerHTML = `
       <div class="page-header">
@@ -979,6 +963,9 @@
     }
   }
 
+  // ─────────────────────────────────────────────
+  // ANALYTICS PAGE
+  // ─────────────────────────────────────────────
   async function renderAnalyticsPage(container) {
     container.innerHTML = `
       <div class="page-header">
@@ -1183,6 +1170,9 @@
     }
   }
 
+  // ─────────────────────────────────────────────
+  // PROPERTIES PAGE + CLICKABLE ROWS
+  // ─────────────────────────────────────────────
   async function renderPropertiesPage(container) {
     container.innerHTML = `
       <div class="page-header">
@@ -1223,9 +1213,18 @@
           </div>
           <form id="propertyForm" onsubmit="saveProperty(event)">
             <div class="modal-body">
-              <div class="form-group"><label class="form-label">Property Name</label><input type="text" name="propertyName" class="form-input" required></div>
-              <div class="form-group"><label class="form-label">Location</label><input type="text" name="location" class="form-input" required></div>
-              <div class="form-group"><label class="form-label">City</label><input type="text" name="city" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Property Name</label>
+                <input type="text" name="propertyName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-input" required>
+              </div>
               <div class="form-group">
                 <label class="form-label">Unit Type</label>
                 <select name="unitType" class="form-select" required>
@@ -1240,7 +1239,10 @@
                   <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
                 </select>
               </div>
-              <div class="form-group"><label class="form-label">Owner</label><input type="text" name="owner" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Owner</label>
+                <input type="text" name="owner" class="form-input" required>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
@@ -1259,9 +1261,18 @@
           <form id="editPropertyForm" onsubmit="updateProperty(event)">
             <div class="modal-body">
               <input type="hidden" name="propertyId">
-              <div class="form-group"><label class="form-label">Property Name</label><input type="text" name="propertyName" class="form-input" required></div>
-              <div class="form-group"><label class="form-label">Location</label><input type="text" name="location" class="form-input" required></div>
-              <div class="form-group"><label class="form-label">City</label><input type="text" name="city" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Property Name</label>
+                <input type="text" name="propertyName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-input" required>
+              </div>
               <div class="form-group">
                 <label class="form-label">Unit Type</label>
                 <select name="unitType" class="form-select" required>
@@ -1276,7 +1287,10 @@
                   <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
                 </select>
               </div>
-              <div class="form-group"><label class="form-label">Owner</label><input type="text" name="owner" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Owner</label>
+                <input type="text" name="owner" class="form-input" required>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
@@ -1321,7 +1335,10 @@
     }
   }
 
-  function openPropertyModal() { document.getElementById('propertyModal').classList.add('active'); }
+  function openPropertyModal() { 
+    document.getElementById('propertyModal').classList.add('active'); 
+  }
+
   function closePropertyModal() {
     document.getElementById('propertyModal').classList.remove('active');
     document.getElementById('propertyForm')?.reset();
@@ -1406,17 +1423,16 @@
     }
   }
 
+  // ─────────────────────────────────────────────
+  // REVIEWS PAGE + CLICKABLE REVIEWS
+  // ─────────────────────────────────────────────
   async function renderReviewsPage(container) {
     container.innerHTML = `
-      <div class="page-header">
-        <h1 class="page-title">Reviews</h1>
-      </div>
+      <div class="page-header"><h1 class="page-title">Reviews</h1></div>
       <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
       <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Recent Reviews</h3>
-        </div>
-        <div id="reviewsList" style="padding:1.2rem 0;"></div>
+        <div class="card-header"><h3 class="card-title">Recent Reviews</h3></div>
+        <div id="reviewsList" style="padding:1rem 0;"></div>
       </div>
 
       <div id="reviewModal" class="modal-overlay">
@@ -1433,7 +1449,10 @@
                   <option value="">Select Property...</option>
                 </select>
               </div>
-              <div class="form-group"><label class="form-label">Guest Name</label><input type="text" name="guestName" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Guest Name</label>
+                <input type="text" name="guestName" class="form-input" required>
+              </div>
               <div class="form-group">
                 <label class="form-label">Rating</label>
                 <select name="rating" class="form-select" required>
@@ -1449,11 +1468,20 @@
                 <label class="form-label">Platform</label>
                 <select name="platform" class="form-select" required>
                   <option value="">Select...</option>
-                  <option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+                  <option>Airbnb</option>
+                  <option>Booking.com</option>
+                  <option>Vrbo</option>
+                  <option>Direct</option>
                 </select>
               </div>
-              <div class="form-group"><label class="form-label">Checkout Date *</label><input type="date" name="checkoutDate" class="form-input" required></div>
-              <div class="form-group"><label class="form-label">Comment</label><textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea></div>
+              <div class="form-group">
+                <label class="form-label">Checkout Date *</label>
+                <input type="date" name="checkoutDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
@@ -1476,22 +1504,37 @@
                 <label class="form-label">Property *</label>
                 <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
               </div>
-              <div class="form-group"><label class="form-label">Guest Name</label><input type="text" name="guestName" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Guest Name</label>
+                <input type="text" name="guestName" class="form-input" required>
+              </div>
               <div class="form-group">
                 <label class="form-label">Rating</label>
                 <select name="rating" class="form-select" required>
-                  <option value="1">1 - Poor</option><option value="2">2 - Fair</option>
-                  <option value="3">3 - Good</option><option value="4">4 - Very Good</option><option value="5">5 - Excellent</option>
+                  <option value="1">1 - Poor</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="3">3 - Good</option>
+                  <option value="4">4 - Very Good</option>
+                  <option value="5">5 - Excellent</option>
                 </select>
               </div>
               <div class="form-group">
                 <label class="form-label">Platform</label>
                 <select name="platform" class="form-select" required>
-                  <option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+                  <option>Airbnb</option>
+                  <option>Booking.com</option>
+                  <option>Vrbo</option>
+                  <option>Direct</option>
                 </select>
               </div>
-              <div class="form-group"><label class="form-label">Checkout Date</label><input type="date" name="checkoutDate" class="form-input" required></div>
-              <div class="form-group"><label class="form-label">Comment</label><textarea name="comment" class="form-textarea"></textarea></div>
+              <div class="form-group">
+                <label class="form-label">Checkout Date</label>
+                <input type="date" name="checkoutDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-textarea"></textarea>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
@@ -1539,24 +1582,22 @@
           <div class="review-item" onclick="openEditReviewModal('${doc.id}')"
                onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
                onmouseout="this.style.backgroundColor=''">
-            <div class="review-header">
-              <div>
-                <div class="review-guest">
-                  ${d.guestName || 'Anonymous Guest'}
-                  <span class="badge badge-${badge}" style="margin-left:12px;">${d.rating}/5</span>
-                </div>
-                <div class="review-meta">
-                  ${d.platform ? `<span class="badge badge-primary">${d.platform}</span>` : ''}
-                  ${checkoutStr !== 'N/A' ? ` • Checkout: ${checkoutStr}` : ''}
-                </div>
+            <div style="display:flex;justify-content:space-between;align-items:start; flex-wrap:wrap; gap:1rem; margin-bottom:0.8rem;">
+              <div style="flex:1;">
+                <strong style="font-size:1.1rem;">${d.guestName || 'Anonymous'}</strong>
+                <span class="badge badge-${badge}" style="margin-left:8px;">${d.rating}/5</span>
               </div>
-              <div style="display:flex; gap:8px;" onclick="event.stopPropagation();">
+              <div style="display:flex; gap:0.5rem;" onclick="event.stopPropagation();">
                 <button class="btn btn-secondary" onclick="openEditReviewModal('${doc.id}')">Edit</button>
                 <button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button>
               </div>
             </div>
-            <div class="review-comment">
-              ${d.comment ? d.comment.replace(/\n/g, '<br>') : '<em style="color:var(--color-text-secondary);">No comment provided</em>'}
+            <p style="margin:0.6rem 0 1rem; line-height:1.6; white-space:pre-wrap; word-break:break-word;">
+              ${d.comment ? d.comment.replace(/\n/g, '<br>') : '—'}
+            </p>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:0.85rem;">
+              <span class="badge badge-primary">${d.platform || '?'}</span>
+              <span style="color:var(--color-text-secondary);">Checkout: ${checkoutStr}</span>
             </div>
           </div>`;
       });
@@ -1566,7 +1607,10 @@
     }
   }
 
-  function openReviewModal() { document.getElementById('reviewModal').classList.add('active'); }
+  function openReviewModal() { 
+    document.getElementById('reviewModal').classList.add('active'); 
+  }
+
   function closeReviewModal() {
     document.getElementById('reviewModal').classList.remove('active');
     document.getElementById('reviewForm')?.reset();
@@ -1730,6 +1774,9 @@
     }
   }
 
+  // ─────────────────────────────────────────────
+  // ACTION PLANS (unchanged - no row click added here)
+  // ─────────────────────────────────────────────
   async function renderActionsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Action Plans</h1></div>
@@ -1798,57 +1845,6 @@
           </form>
         </div>
       </div>
-
-      <div id="editActionModal" class="modal-overlay">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">Edit Action Plan</h3>
-            <button class="modal-close" onclick="closeEditActionModal()">×</button>
-          </div>
-          <form id="editActionForm" onsubmit="updateAction(event)">
-            <div class="modal-body">
-              <input type="hidden" name="actionId">
-              <div class="form-group">
-                <label class="form-label">Property *</label>
-                <select id="editActionPropertySelect" name="propertyId" class="form-select" required></select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Issue Category</label>
-                <select name="issueCategory" class="form-select" required>
-                  <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Impact Level</label>
-                <select name="impactLevel" class="form-select" required>
-                  <option>Low</option><option>Medium</option><option>High</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Assigned To</label>
-                <input type="text" name="assignedTo" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea name="actionDescription" class="form-textarea" required></textarea>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select" required>
-                  <option>Pending</option>
-                  <option>In Progress</option>
-                  <option>Completed</option>
-                  <option>Cancelled</option>
-                </select>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="closeEditActionModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
-          </form>
-        </div>
-      </div>
     `;
     await loadActionsDropdown();
     await loadActions();
@@ -1857,12 +1853,10 @@
   async function loadActionsDropdown() {
     try {
       const snap = await db.collection('properties').get();
+      const select = document.getElementById('actionPropertySelect');
       let html = '<option value="">Select Property...</option>';
-      snap.forEach(doc => {
-        html += `<option value="${doc.id}">${doc.data().propertyName}</option>`;
-      });
-      document.getElementById('actionPropertySelect').innerHTML = html;
-      document.getElementById('editActionPropertySelect').innerHTML = html;
+      snap.forEach(doc => html += `<option value="${doc.id}">${doc.data().propertyName}</option>`);
+      select.innerHTML = html;
     } catch (err) { console.error(err); }
   }
 
@@ -1883,18 +1877,13 @@
         const impactColor = d.impactLevel === 'High' ? 'danger' : 'warning';
         const propName = propsMap[d.propertyId] || 'Unknown';
         html += `
-          <tr onclick="openEditActionModal('${doc.id}')"
-              onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
-              onmouseout="this.style.backgroundColor=''">
+          <tr>
             <td><strong>${propName}</strong></td>
             <td><strong>${d.issueCategory || '?'}</strong></td>
             <td><span class="badge badge-${impactColor}">${d.impactLevel}</span></td>
             <td>${d.assignedTo || '—'}</td>
             <td><span class="badge badge-primary">${d.status || 'Pending'}</span></td>
-            <td onclick="event.stopPropagation();">
-              <button class="btn btn-secondary" onclick="event.stopPropagation(); openEditActionModal('${doc.id}')">Edit</button>
-              <button class="btn btn-danger" onclick="event.stopPropagation(); deleteAction('${doc.id}')">Delete</button>
-            </td>
+            <td><button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button></td>
           </tr>`;
       });
       tbody.innerHTML = html;
@@ -1926,53 +1915,6 @@
       await renderActionsPage(document.getElementById('mainContent'));
     } catch (err) {
       alert("Error: " + err.message);
-    }
-  }
-
-  async function openEditActionModal(id) {
-    try {
-      const doc = await db.collection('actionPlans').doc(id).get();
-      if (!doc.exists) return alert("Action not found");
-
-      const data = doc.data();
-      const form = document.getElementById('editActionForm');
-      form.actionId.value = id;
-      form.propertyId.value = data.propertyId || '';
-      form.issueCategory.value = data.issueCategory || '';
-      form.impactLevel.value = data.impactLevel || 'Medium';
-      form.assignedTo.value = data.assignedTo || '';
-      form.actionDescription.value = data.actionDescription || '';
-      form.status.value = data.status || 'Pending';
-
-      document.getElementById('editActionModal').classList.add('active');
-    } catch (err) {
-      alert("Error loading action: " + err.message);
-    }
-  }
-
-  function closeEditActionModal() {
-    document.getElementById('editActionModal').classList.remove('active');
-    document.getElementById('editActionForm')?.reset();
-  }
-
-  async function updateAction(e) {
-    e.preventDefault();
-    const form = e.target;
-    const id = form.actionId.value;
-    try {
-      await db.collection('actionPlans').doc(id).update({
-        propertyId: form.propertyId.value,
-        issueCategory: form.issueCategory.value,
-        impactLevel: form.impactLevel.value,
-        assignedTo: form.assignedTo.value.trim(),
-        actionDescription: form.actionDescription.value.trim(),
-        status: form.status.value,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      closeEditActionModal();
-      await renderActionsPage(document.getElementById('mainContent'));
-    } catch (err) {
-      alert("Update failed: " + err.message);
     }
   }
 
@@ -2034,6 +1976,7 @@
     init();
   }
 
+  // Expose functions to window
   window.navigateTo = navigateTo;
   window.toggleTheme = toggleTheme;
   window.applyDateFilter = applyDateFilter;
@@ -2056,9 +1999,6 @@
   window.openActionModal = openActionModal;
   window.closeActionModal = closeActionModal;
   window.saveAction = saveAction;
-  window.openEditActionModal = openEditActionModal;
-  window.closeEditActionModal = closeEditActionModal;
-  window.updateAction = updateAction;
   window.deleteAction = deleteAction;
 </script>
 </body>
