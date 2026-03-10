@@ -335,6 +335,7 @@
   let currentPage = 'dashboard';
   let dateFilterFrom = null;
   let dateFilterTo = null;
+  let chartInstances = {};
 
   function initializeFirebase() {
     try {
@@ -460,9 +461,10 @@
       let lowRatings = 0;
       const platformCount = { Airbnb:0, "Booking.com":0, Direct:0, Vrbo:0 };
       const ratingCount   = {1:0, 2:0, 3:0, 4:0, 5:0};
-      const propReviews   = {};
       const issueCount    = {};
 
+      // Count reviews per property from reviews collection
+      const propReviewsCount = {};
       revs.forEach(doc => {
         const d = doc.data();
         const r = Number(d.rating) || 0;
@@ -472,11 +474,20 @@
 
         const p = d.platform || "Direct";
         platformCount[p] = (platformCount[p] || 0) + 1;
+
+        // Count reviews per property
+        if (d.propertyId) {
+          propReviewsCount[d.propertyId] = (propReviewsCount[d.propertyId] || 0) + 1;
+        }
       });
 
+      // Build property names mapped to review counts
+      const propReviews = {};
       props.forEach(doc => {
         const d = doc.data();
-        propReviews[d.propertyName || "Unnamed"] = d.totalReviews || 0;
+        const propName = d.propertyName || "Unnamed";
+        const count = propReviewsCount[doc.id] || 0;
+        propReviews[propName] = count;
       });
 
       actions.forEach(doc => {
@@ -491,7 +502,14 @@
 
       const colors = ['#2563eb','#10b981','#f59e0b','#8b5cf6','#ec4899'];
 
-      new Chart(document.getElementById('platformChart'), {
+      // Destroy old charts if they exist
+      if (chartInstances.platformChart) chartInstances.platformChart.destroy();
+      if (chartInstances.ratingChart) chartInstances.ratingChart.destroy();
+      if (chartInstances.propertiesChart) chartInstances.propertiesChart.destroy();
+      if (chartInstances.issuesChart) chartInstances.issuesChart.destroy();
+
+      // Platform Chart
+      chartInstances.platformChart = new Chart(document.getElementById('platformChart'), {
         type: 'bar',
         data: {
           labels: Object.keys(platformCount),
@@ -505,7 +523,8 @@
         options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
       });
 
-      new Chart(document.getElementById('ratingChart'), {
+      // Rating Chart
+      chartInstances.ratingChart = new Chart(document.getElementById('ratingChart'), {
         type: 'doughnut',
         data: {
           labels: ['1★','2★','3★','4★','5★'],
@@ -517,17 +536,21 @@
         options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
       });
 
+      // Top Properties Chart - FIXED
       const topProps = Object.entries(propReviews)
         .sort((a,b)=>b[1]-a[1])
         .slice(0,6);
 
-      new Chart(document.getElementById('propertiesChart'), {
+      const propLabels = topProps.map(([name])=>name);
+      const propData = topProps.map(([,cnt])=>cnt);
+
+      chartInstances.propertiesChart = new Chart(document.getElementById('propertiesChart'), {
         type: 'bar',
         data: {
-          labels: topProps.map(([name])=>name),
+          labels: propLabels.length > 0 ? propLabels : ['No properties'],
           datasets: [{
             label: 'Reviews',
-            data: topProps.map(([,cnt])=>cnt),
+            data: propData.length > 0 ? propData : [0],
             backgroundColor: '#2563eb',
             borderRadius: 6
           }]
@@ -540,13 +563,14 @@
         }
       });
 
-      new Chart(document.getElementById('issuesChart'), {
+      // Issues Chart
+      chartInstances.issuesChart = new Chart(document.getElementById('issuesChart'), {
         type: 'bar',
         data: {
-          labels: Object.keys(issueCount),
+          labels: Object.keys(issueCount).length > 0 ? Object.keys(issueCount) : ['No issues'],
           datasets: [{
             label: 'Occurrences',
-            data: Object.values(issueCount),
+            data: Object.values(issueCount).length > 0 ? Object.values(issueCount) : [0],
             backgroundColor: '#ef4444',
             borderRadius: 6
           }]
@@ -556,7 +580,7 @@
 
     } catch (err) {
       console.error("Dashboard load error:", err);
-      container.innerHTML += `<p style="color:var(--color-danger); text-align:center;">Error loading data</p>`;
+      container.innerHTML += `<p style="color:var(--color-danger); text-align:center;">Error: ${err.message}</p>`;
     }
   }
 
@@ -741,6 +765,12 @@
           <form id="reviewForm" onsubmit="saveReview(event)">
             <div class="modal-body">
               <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="reviewPropertySelect" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
+              <div class="form-group">
                 <label class="form-label">Guest Name</label>
                 <input type="text" name="guestName" class="form-input" required>
               </div>
@@ -779,7 +809,22 @@
       </div>
     `;
 
+    await loadReviewsDropdown();
     await loadReviews();
+  }
+
+  async function loadReviewsDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      const select = document.getElementById('reviewPropertySelect');
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => {
+        html += `<option value="${doc.id}">${doc.data().propertyName}</option>`;
+      });
+      select.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function loadReviews() {
@@ -824,16 +869,41 @@
   async function saveReview(e) {
     e.preventDefault();
     const form = e.target;
+    const propertyId = document.getElementById('reviewPropertySelect').value;
+    
+    if (!propertyId) {
+      alert('Please select a property');
+      return;
+    }
+
     try {
+      const rating = Number(form.rating.value);
+      
       await db.collection('reviews').add({
+        propertyId: propertyId,
         guestName: form.guestName.value.trim(),
-        rating:    Number(form.rating.value),
-        platform:  form.platform.value,
-        comment:   form.comment.value.trim(),
+        rating: rating,
+        platform: form.platform.value,
+        comment: form.comment.value.trim(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+
+      const propDoc = await db.collection('properties').doc(propertyId).get();
+      const currentData = propDoc.data();
+      const oldCount = currentData.totalReviews || 0;
+      const oldRating = currentData.averageRating || 0;
+      const newCount = oldCount + 1;
+      const newRating = ((oldRating * oldCount) + rating) / newCount;
+
+      await db.collection('properties').doc(propertyId).update({
+        totalReviews: newCount,
+        averageRating: Math.round(newRating * 10) / 10,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
       closeReviewModal();
       await renderReviewsPage(document.getElementById('mainContent'));
+      navigateTo('dashboard');
     } catch (err) {
       alert("Error: " + err.message);
     }
@@ -842,8 +912,34 @@
   async function deleteReview(id) {
     if (!confirm("Delete review?")) return;
     try {
+      const reviewDoc = await db.collection('reviews').doc(id).get();
+      const reviewData = reviewDoc.data();
+      const propertyId = reviewData.propertyId;
+
       await db.collection('reviews').doc(id).delete();
+
+      if (propertyId) {
+        const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
+        if (reviewsSnap.empty) {
+          await db.collection('properties').doc(propertyId).update({
+            totalReviews: 0,
+            averageRating: 0
+          });
+        } else {
+          let totalRating = 0;
+          reviewsSnap.forEach(doc => {
+            totalRating += Number(doc.data().rating) || 0;
+          });
+          const newRating = Math.round((totalRating / reviewsSnap.size) * 10) / 10;
+          await db.collection('properties').doc(propertyId).update({
+            totalReviews: reviewsSnap.size,
+            averageRating: newRating
+          });
+        }
+      }
+
       await renderReviewsPage(document.getElementById('mainContent'));
+      navigateTo('dashboard');
     } catch (err) {
       alert("Delete failed");
     }
@@ -860,6 +956,7 @@
           <table class="table">
             <thead>
               <tr>
+                <th>Property</th>
                 <th>Issue</th>
                 <th>Impact</th>
                 <th>Assigned To</th>
@@ -868,7 +965,7 @@
               </tr>
             </thead>
             <tbody id="actionsTableBody">
-              <tr><td colspan="5" style="text-align:center;padding:3rem;">Loading...</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:3rem;">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -882,6 +979,12 @@
           </div>
           <form id="actionForm" onsubmit="saveAction(event)">
             <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="actionPropertySelect" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label class="form-label">Issue Category</label>
                 <select name="issueCategory" class="form-select" required>
@@ -919,7 +1022,22 @@
       </div>
     `;
 
+    await loadActionsDropdown();
     await loadActions();
+  }
+
+  async function loadActionsDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      const select = document.getElementById('actionPropertySelect');
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => {
+        html += `<option value="${doc.id}">${doc.data().propertyName}</option>`;
+      });
+      select.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function loadActions() {
@@ -927,15 +1045,24 @@
       const snap = await db.collection('actionPlans').get();
       const tbody = document.getElementById('actionsTableBody');
       if (snap.empty) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:3rem;">No actions yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;">No actions yet</td></tr>';
         return;
       }
+
+      const propsSnap = await db.collection('properties').get();
+      const propsMap = {};
+      propsSnap.forEach(doc => {
+        propsMap[doc.id] = doc.data().propertyName;
+      });
+
       let html = '';
       snap.forEach(doc => {
         const d = doc.data();
         const impactColor = d.impactLevel === 'High' ? 'danger' : 'warning';
+        const propName = propsMap[d.propertyId] || 'Unknown';
         html += `
           <tr>
+            <td><strong>${propName}</strong></td>
             <td><strong>${d.issueCategory || '?'}</strong></td>
             <td><span class="badge badge-${impactColor}">${d.impactLevel}</span></td>
             <td>${d.assignedTo || '—'}</td>
@@ -958,8 +1085,16 @@
   async function saveAction(e) {
     e.preventDefault();
     const form = e.target;
+    const propertyId = document.getElementById('actionPropertySelect').value;
+
+    if (!propertyId) {
+      alert('Please select a property');
+      return;
+    }
+
     try {
       await db.collection('actionPlans').add({
+        propertyId: propertyId,
         issueCategory:     form.issueCategory.value,
         impactLevel:       form.impactLevel.value,
         assignedTo:        form.assignedTo.value.trim(),
@@ -984,9 +1119,6 @@
     }
   }
 
-  // ────────────────────────────────────────────────
-  //  Date Filter Functions
-  // ────────────────────────────────────────────────
   function applyDateFilter() {
     dateFilterFrom = document.getElementById('dateFrom').value;
     dateFilterTo = document.getElementById('dateTo').value;
@@ -1005,9 +1137,6 @@
     navigateTo('dashboard');
   }
 
-  // ────────────────────────────────────────────────
-  //  Property Search Filter
-  // ────────────────────────────────────────────────
   function filterProperties() {
     const searchText = document.getElementById('propertySearch').value.toLowerCase();
     const rows = document.querySelectorAll('#propertiesTableBody tr');
@@ -1024,9 +1153,6 @@
     });
   }
 
-  // ────────────────────────────────────────────────
-  //  App start
-  // ────────────────────────────────────────────────
   async function init() {
     loadTheme();
     const fbOk = initializeFirebase();
@@ -1047,7 +1173,6 @@
     init();
   }
 
-  // Global exports
   window.navigateTo        = navigateTo;
   window.toggleTheme       = toggleTheme;
   window.applyDateFilter   = applyDateFilter;
