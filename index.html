@@ -322,9 +322,6 @@
 </div>
 
 <script>
-  // ────────────────────────────────────────────────
-  //  Firebase Config (using the more complete one)
-  // ────────────────────────────────────────────────
   const firebaseConfig = {
     apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
     authDomain: "guestreviewdashboard.firebaseapp.com",
@@ -336,10 +333,9 @@
 
   let db;
   let currentPage = 'dashboard';
+  let dateFilterFrom = null;
+  let dateFilterTo = null;
 
-  // ────────────────────────────────────────────────
-  //  Initialize
-  // ────────────────────────────────────────────────
   function initializeFirebase() {
     try {
       firebase.initializeApp(firebaseConfig);
@@ -365,9 +361,6 @@
     }
   }
 
-  // ────────────────────────────────────────────────
-  //  Theme
-  // ────────────────────────────────────────────────
   function toggleTheme() {
     const html = document.documentElement;
     const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -382,29 +375,35 @@
     document.getElementById('themeToggle').textContent = saved === 'light' ? '☀️' : '🌙';
   }
 
-  // ────────────────────────────────────────────────
-  //  Navigation
-  // ────────────────────────────────────────────────
   function navigateTo(page) {
     currentPage = page;
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.querySelector(`[onclick="navigateTo('${page}')"]`).classList.add('active');
-
     const content = document.getElementById('mainContent');
-
     if      (page === 'dashboard')  renderDashboard(content);
     else if (page === 'properties') renderPropertiesPage(content);
     else if (page === 'reviews')    renderReviewsPage(content);
     else if (page === 'actions')    renderActionsPage(content);
   }
 
-  // ────────────────────────────────────────────────
-  //  DASHBOARD ─ with charts
-  // ────────────────────────────────────────────────
   async function renderDashboard(container) {
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">Executive Overview</h1>
+        <div style="display:flex; gap:1rem; margin-top:1rem; flex-wrap:wrap;">
+          <div>
+            <label style="font-size:0.9rem; color:var(--color-text-secondary);">From Date</label>
+            <input type="date" id="dateFrom" class="form-input" style="width:140px;">
+          </div>
+          <div>
+            <label style="font-size:0.9rem; color:var(--color-text-secondary);">To Date</label>
+            <input type="date" id="dateTo" class="form-input" style="width:140px;">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn btn-primary" onclick="applyDateFilter()" style="margin:0;">Filter</button>
+            <button class="btn btn-secondary" onclick="clearDateFilter()" style="margin:0; margin-left:0.5rem;">Clear</button>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-4">
@@ -485,13 +484,11 @@
         issueCount[cat] = (issueCount[cat] || 0) + 1;
       });
 
-      // Update metrics
       document.getElementById('totalReviews').textContent   = totalReviews;
       document.getElementById('avgRating').textContent     = totalReviews ? (totalRating / totalReviews).toFixed(1) : "—";
       document.getElementById('lowRatings').textContent    = lowRatings;
       document.getElementById('totalProperties').textContent = props.size;
 
-      // Charts
       const colors = ['#2563eb','#10b981','#f59e0b','#8b5cf6','#ec4899'];
 
       new Chart(document.getElementById('platformChart'), {
@@ -563,21 +560,21 @@
     }
   }
 
-  // ────────────────────────────────────────────────
-  //  PROPERTIES
-  // ────────────────────────────────────────────────
   async function renderPropertiesPage(container) {
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">Properties</h1>
+        <div style="margin-top:1rem; display:flex; gap:1rem;">
+          <input type="text" id="propertySearch" class="form-input" placeholder="Search properties..." style="flex:1; max-width:300px;" onkeyup="filterProperties()">
+          <button class="btn btn-primary" onclick="openPropertyModal()">+ Add Property</button>
+        </div>
       </div>
-      <button class="btn btn-primary" onclick="openPropertyModal()">+ Add Property</button>
 
-      <div class="card">
+      <div class="card" style="display:flex; flex-direction:column; height:60vh;">
         <div class="card-header">
           <h3 class="card-title">All Properties</h3>
         </div>
-        <div class="table-container" style="overflow-x:auto;">
+        <div class="table-container" style="overflow-x:auto; overflow-y:auto; flex:1;">
           <table class="table">
             <thead>
               <tr>
@@ -596,7 +593,6 @@
         </div>
       </div>
 
-      <!-- Property Modal -->
       <div id="propertyModal" class="modal-overlay">
         <div class="modal">
           <div class="modal-header">
@@ -625,14 +621,18 @@
                   <option>1BR</option>
                   <option>2BR</option>
                   <option>3BR</option>
+                  <option>4BR</option>
+                  <option>Villa</option>
                 </select>
               </div>
               <div class="form-group">
                 <label class="form-label">Platform</label>
                 <select name="platform" class="form-select" required>
                   <option value="">Select...</option>
+                  <option>All Platforms</option>
                   <option>Airbnb</option>
                   <option>Booking.com</option>
+                  <option>Vrbo</option>
                   <option>Direct</option>
                 </select>
               </div>
@@ -722,9 +722,6 @@
     }
   }
 
-  // ────────────────────────────────────────────────
-  //  REVIEWS  (similar pattern – abbreviated here)
-  // ────────────────────────────────────────────────
   async function renderReviewsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Reviews</h1></div>
@@ -764,6 +761,7 @@
                   <option value="">Select...</option>
                   <option>Airbnb</option>
                   <option>Booking.com</option>
+                  <option>Vrbo</option>
                   <option>Direct</option>
                 </select>
               </div>
@@ -851,9 +849,6 @@
     }
   }
 
-  // ────────────────────────────────────────────────
-  //  ACTIONS  (similar – abbreviated)
-  // ────────────────────────────────────────────────
   async function renderActionsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Action Plans</h1></div>
@@ -990,6 +985,46 @@
   }
 
   // ────────────────────────────────────────────────
+  //  Date Filter Functions
+  // ────────────────────────────────────────────────
+  function applyDateFilter() {
+    dateFilterFrom = document.getElementById('dateFrom').value;
+    dateFilterTo = document.getElementById('dateTo').value;
+    if (dateFilterFrom && dateFilterTo) {
+      navigateTo('dashboard');
+    } else {
+      alert('Please select both dates');
+    }
+  }
+
+  function clearDateFilter() {
+    dateFilterFrom = null;
+    dateFilterTo = null;
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    navigateTo('dashboard');
+  }
+
+  // ────────────────────────────────────────────────
+  //  Property Search Filter
+  // ────────────────────────────────────────────────
+  function filterProperties() {
+    const searchText = document.getElementById('propertySearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#propertiesTableBody tr');
+    
+    rows.forEach(row => {
+      const name = row.cells[0]?.textContent.toLowerCase() || '';
+      const location = row.cells[1]?.textContent.toLowerCase() || '';
+      
+      if (name.includes(searchText) || location.includes(searchText)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // ────────────────────────────────────────────────
   //  App start
   // ────────────────────────────────────────────────
   async function init() {
@@ -1015,6 +1050,9 @@
   // Global exports
   window.navigateTo        = navigateTo;
   window.toggleTheme       = toggleTheme;
+  window.applyDateFilter   = applyDateFilter;
+  window.clearDateFilter   = clearDateFilter;
+  window.filterProperties  = filterProperties;
   window.openPropertyModal = openPropertyModal;
   window.closePropertyModal= closePropertyModal;
   window.saveProperty      = saveProperty;
