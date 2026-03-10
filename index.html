@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
   <style>
     :root {
       --color-primary: #2563eb;
@@ -167,7 +168,11 @@
       border-bottom: 2px solid var(--color-border);
     }
     .table th, .table td { padding: 1rem; text-align: left; }
-    .table tbody tr:hover { background: rgba(0,0,0,0.03); }
+    .table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .table tbody tr:hover { background: rgba(37,99,235,0.07); }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -265,6 +270,19 @@
       align-items: center;
       gap: 1rem;
     }
+    .review-item {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .review-item:hover {
+      background: rgba(37,99,235,0.07);
+      transform: translateY(-1px);
+    }
     @media (max-width: 992px) {
       .app-container { grid-template-columns: 1fr; }
       .sidebar { position: fixed; z-index: 900; transform: translateX(-100%); transition: transform 0.3s; }
@@ -275,6 +293,7 @@
   </style>
 </head>
 <body>
+
 <div class="app-container">
   <aside class="sidebar">
     <div class="sidebar-brand">
@@ -299,6 +318,7 @@
       </div>
     </div>
   </aside>
+
   <main class="main-content" id="mainContent">
     <div class="loading">
       <div class="spinner"></div>
@@ -306,6 +326,258 @@
     </div>
   </main>
 </div>
+
+<!-- Property Modals -->
+<div id="propertyModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Add New Property</h3>
+      <button class="modal-close" onclick="closePropertyModal()">×</button>
+    </div>
+    <form id="propertyForm" onsubmit="saveProperty(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="propertyName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Type</label>
+          <select name="unitType" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option value="">Select...</option>
+            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" name="owner" class="form-input" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Property</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editPropertyModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Property</h3>
+      <button class="modal-close" onclick="closeEditPropertyModal()">×</button>
+    </div>
+    <form id="editPropertyForm" onsubmit="updateProperty(event)">
+      <div class="modal-body">
+        <input type="hidden" name="propertyId">
+        <div class="form-group">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="propertyName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Type</label>
+          <select name="unitType" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option value="">Select...</option>
+            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" name="owner" class="form-input" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Review Modals -->
+<div id="reviewModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Review</h3>
+      <button class="modal-close" onclick="closeReviewModal()">×</button>
+    </div>
+    <form id="reviewForm" onsubmit="saveReview(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="reviewPropertySelect" class="form-select" required>
+            <option value="">Select Property...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input type="text" name="guestName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <select name="rating" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Checkout Date *</label>
+          <input type="date" name="checkoutDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comment</label>
+          <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editReviewModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Review</h3>
+      <button class="modal-close" onclick="closeEditReviewModal()">×</button>
+    </div>
+    <form id="editReviewForm" onsubmit="updateReview(event)">
+      <div class="modal-body">
+        <input type="hidden" name="reviewId">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input type="text" name="guestName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <select name="rating" class="form-select" required>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Checkout Date</label>
+          <input type="date" name="checkoutDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comment</label>
+          <textarea name="comment" class="form-textarea"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Action Plans Modal (unchanged) -->
+<div id="actionModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">New Action Plan</h3>
+      <button class="modal-close" onclick="closeActionModal()">×</button>
+    </div>
+    <form id="actionForm" onsubmit="saveAction(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="actionPropertySelect" class="form-select" required>
+            <option value="">Select Property...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Category</label>
+          <select name="issueCategory" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impact Level</label>
+          <select name="impactLevel" class="form-select" required>
+            <option>Low</option><option>Medium</option><option>High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned To</label>
+          <input type="text" name="assignedTo" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="actionDescription" class="form-textarea" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
@@ -315,6 +587,7 @@
     messagingSenderId: "726657937453",
     appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
   };
+
   let db;
   let currentPage = 'dashboard';
   let dateFilterFrom = null;
@@ -373,7 +646,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // DASHBOARD - with Month-to-Month + Risk Alert + Checkout Date filtering
+  // DASHBOARD
   // ─────────────────────────────────────────────
   async function renderDashboard(container) {
     container.innerHTML = `
@@ -395,7 +668,6 @@
         </div>
       </div>
 
-      <!-- RISK ALERT BANNER -->
       <div id="riskBanner" class="risk-banner">
         <span style="font-size:2rem;">🚨</span>
         <div id="riskMessage" style="flex:1; font-weight:500;"></div>
@@ -420,7 +692,6 @@
         </div>
       </div>
 
-      <!-- MONTH-OVER-MONTH + TREND -->
       <div class="grid grid-2">
         <div class="card">
           <div class="card-header"><h3 class="card-title">Month-over-Month Comparison</h3></div>
@@ -464,6 +735,7 @@
           <div class="chart-container"><canvas id="ratingChart"></canvas></div>
         </div>
       </div>
+
       <div class="grid grid-2">
         <div class="card">
           <div class="card-header"><h3 class="card-title">Properties by Review Count</h3></div>
@@ -482,7 +754,6 @@
         db.collection('properties').get()
       ]);
 
-      // FILTER BY CHECKOUT DATE
       let reviewsList = [];
       revs.forEach(doc => {
         const d = doc.data();
@@ -500,7 +771,7 @@
           }
           if (include) reviewsList.push(d);
         } else {
-          reviewsList.push(d); // legacy reviews without checkout date
+          reviewsList.push(d);
         }
       });
 
@@ -536,13 +807,11 @@
         propAvgRatings[propName] = count > 0 ? Math.round((total / count) * 10) / 10 : 0;
       });
 
-      // SET METRICS
       document.getElementById('totalReviews').textContent = totalReviews;
       document.getElementById('avgRating').textContent = totalReviews ? (totalRating / totalReviews).toFixed(1) : "—";
       document.getElementById('lowRatings').textContent = lowRatings;
       document.getElementById('totalProperties').textContent = props.size;
 
-      // DESTROY OLD CHARTS
       ['platformChart','ratingChart','propertiesChart','ratingPerPropertyChart','monthlyTrendChart'].forEach(key => {
         if (chartInstances[key]) chartInstances[key].destroy();
       });
@@ -593,7 +862,6 @@
         options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, scales: { x:{ beginAtZero:true, max:5 } } }
       });
 
-      // ── MONTH-TO-MONTH + RISK ALERT + TREND ──
       const monthGroups = {};
       reviewsList.forEach(r => {
         let monthKey = 'unknown';
@@ -642,7 +910,6 @@
       `;
       document.getElementById('momChanges').innerHTML = momHtml;
 
-      // RISK ALERT
       const lowPct = thisReviews > 0 ? Math.round((thisM.low / thisReviews) * 100) : 0;
       const riskEl = document.getElementById('riskBanner');
       if (thisReviews > 4 && lowPct > 25) {
@@ -652,7 +919,6 @@
         riskEl.style.display = 'none';
       }
 
-      // MONTHLY TREND CHART
       chartInstances.monthlyTrendChart = new Chart(document.getElementById('monthlyTrendChart'), {
         type: 'bar',
         data: {
@@ -698,7 +964,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // ANALYTICS - with Monthly Risk Section
+  // ANALYTICS PAGE
   // ─────────────────────────────────────────────
   async function renderAnalyticsPage(container) {
     container.innerHTML = `
@@ -830,7 +1096,6 @@
 
       container.querySelector('#analyticsContent').innerHTML = html;
 
-      // Top Performers
       let topHtml = topPerformers.length === 0 
         ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">Add reviews to see top performers</p>'
         : topPerformers.map(([id, prop]) => `
@@ -845,7 +1110,6 @@
           `).join('');
       document.getElementById('topPerformersSection').innerHTML = topHtml;
 
-      // Negative Reviews
       let negativeHtml = negativeReviews.length === 0 
         ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">No properties with negative reviews 🎉</p>'
         : negativeReviews.map(([id, prop]) => `
@@ -860,7 +1124,6 @@
           `).join('');
       document.getElementById('negativeReviewsSection').innerHTML = negativeHtml;
 
-      // Needs Improvement
       let improvementHtml = needsImprovement.length === 0 
         ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">All properties are performing well! 🚀</p>'
         : needsImprovement.map(([id, prop]) => {
@@ -879,7 +1142,6 @@
           }).join('');
       document.getElementById('improvementSection').innerHTML = improvementHtml;
 
-      // MONTHLY RISK SECTION
       const monthlyRisks = Object.entries(analytics)
         .filter(([id, p]) => p.monthlyReviews > 2 && (p.monthlyLowRatings / p.monthlyReviews) > 0.25)
         .sort((a, b) => (b[1].monthlyLowRatings / b[1].monthlyReviews) - (a[1].monthlyLowRatings / a[1].monthlyReviews));
@@ -909,7 +1171,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // PROPERTIES, REVIEWS, ACTIONS (updated for checkout date)
+  // PROPERTIES PAGE + CLICKABLE ROWS
   // ─────────────────────────────────────────────
   async function renderPropertiesPage(container) {
     container.innerHTML = `
@@ -942,6 +1204,7 @@
           </table>
         </div>
       </div>
+
       <div id="propertyModal" class="modal-overlay">
         <div class="modal">
           <div class="modal-header">
@@ -988,6 +1251,54 @@
           </form>
         </div>
       </div>
+
+      <div id="editPropertyModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit Property</h3>
+            <button class="modal-close" onclick="closeEditPropertyModal()">×</button>
+          </div>
+          <form id="editPropertyForm" onsubmit="updateProperty(event)">
+            <div class="modal-body">
+              <input type="hidden" name="propertyId">
+              <div class="form-group">
+                <label class="form-label">Property Name</label>
+                <input type="text" name="propertyName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit Type</label>
+                <select name="unitType" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select name="platform" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Owner</label>
+                <input type="text" name="owner" class="form-input" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
     `;
     await loadProperties();
   }
@@ -1004,13 +1315,18 @@
       snap.forEach(doc => {
         const d = doc.data();
         html += `
-          <tr>
+          <tr onclick="openEditPropertyModal('${doc.id}')"
+              onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
+              onmouseout="this.style.backgroundColor=''">
             <td><strong>${d.propertyName || '—'}</strong></td>
             <td>${d.location || '—'}</td>
             <td>${d.unitType || '—'}</td>
             <td>${d.totalReviews || 0}</td>
             <td>${Number(d.averageRating || 0).toFixed(1)}</td>
-            <td><button class="btn btn-danger" onclick="deleteProperty('${doc.id}')">Delete</button></td>
+            <td onclick="event.stopPropagation();">
+              <button class="btn btn-secondary" onclick="event.stopPropagation(); openEditPropertyModal('${doc.id}')">Edit</button>
+              <button class="btn btn-danger" onclick="event.stopPropagation(); deleteProperty('${doc.id}')">Delete</button>
+            </td>
           </tr>`;
       });
       tbody.innerHTML = html;
@@ -1019,11 +1335,15 @@
     }
   }
 
-  function openPropertyModal() { document.getElementById('propertyModal').classList.add('active'); }
+  function openPropertyModal() { 
+    document.getElementById('propertyModal').classList.add('active'); 
+  }
+
   function closePropertyModal() {
     document.getElementById('propertyModal').classList.remove('active');
     document.getElementById('propertyForm')?.reset();
   }
+
   async function saveProperty(e) {
     e.preventDefault();
     const form = e.target;
@@ -1045,6 +1365,54 @@
       alert("Error saving property: " + err.message);
     }
   }
+
+  async function openEditPropertyModal(id) {
+    try {
+      const doc = await db.collection('properties').doc(id).get();
+      if (!doc.exists) return alert("Property not found");
+
+      const data = doc.data();
+      const form = document.getElementById('editPropertyForm');
+      form.propertyId.value = id;
+      form.propertyName.value = data.propertyName || '';
+      form.location.value = data.location || '';
+      form.city.value = data.city || '';
+      form.unitType.value = data.unitType || '';
+      form.platform.value = data.platform || '';
+      form.owner.value = data.owner || '';
+
+      document.getElementById('editPropertyModal').classList.add('active');
+    } catch (err) {
+      alert("Error loading property: " + err.message);
+    }
+  }
+
+  function closeEditPropertyModal() {
+    document.getElementById('editPropertyModal').classList.remove('active');
+    document.getElementById('editPropertyForm')?.reset();
+  }
+
+  async function updateProperty(e) {
+    e.preventDefault();
+    const form = e.target;
+    const id = form.propertyId.value;
+    try {
+      await db.collection('properties').doc(id).update({
+        propertyName: form.propertyName.value.trim(),
+        location: form.location.value.trim(),
+        city: form.city.value.trim(),
+        unitType: form.unitType.value,
+        platform: form.platform.value,
+        owner: form.owner.value.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeEditPropertyModal();
+      await renderPropertiesPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Update failed: " + err.message);
+    }
+  }
+
   async function deleteProperty(id) {
     if (!confirm("Delete this property?")) return;
     try {
@@ -1055,6 +1423,9 @@
     }
   }
 
+  // ─────────────────────────────────────────────
+  // REVIEWS PAGE + CLICKABLE REVIEWS
+  // ─────────────────────────────────────────────
   async function renderReviewsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Reviews</h1></div>
@@ -1063,6 +1434,7 @@
         <div class="card-header"><h3 class="card-title">Recent Reviews</h3></div>
         <div id="reviewsList" style="padding:1rem 0;"></div>
       </div>
+
       <div id="reviewModal" class="modal-overlay">
         <div class="modal">
           <div class="modal-header">
@@ -1118,6 +1490,59 @@
           </form>
         </div>
       </div>
+
+      <div id="editReviewModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit Review</h3>
+            <button class="modal-close" onclick="closeEditReviewModal()">×</button>
+          </div>
+          <form id="editReviewForm" onsubmit="updateReview(event)">
+            <div class="modal-body">
+              <input type="hidden" name="reviewId">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guest Name</label>
+                <input type="text" name="guestName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rating</label>
+                <select name="rating" class="form-select" required>
+                  <option value="1">1 - Poor</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="3">3 - Good</option>
+                  <option value="4">4 - Very Good</option>
+                  <option value="5">5 - Excellent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select name="platform" class="form-select" required>
+                  <option>Airbnb</option>
+                  <option>Booking.com</option>
+                  <option>Vrbo</option>
+                  <option>Direct</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Checkout Date</label>
+                <input type="date" name="checkoutDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-textarea"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
     `;
     await loadReviewsDropdown();
     await loadReviews();
@@ -1149,19 +1574,27 @@
       snap.forEach(doc => {
         const d = doc.data();
         const badge = d.rating <= 2 ? 'danger' : d.rating <= 4 ? 'warning' : 'success';
-        const checkoutStr = d.checkoutDate && d.checkoutDate.toDate 
-          ? d.checkoutDate.toDate().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) 
+        const checkoutStr = d.checkoutDate && d.checkoutDate.toDate
+          ? d.checkoutDate.toDate().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})
           : 'N/A';
+
         html += `
-          <div style="padding:1rem;border-bottom:1px solid var(--color-border);">
-            <div style="display:flex;justify-content:space-between;align-items:start;">
-              <div>
-                <strong>${d.guestName || 'Anonymous'}</strong>
+          <div class="review-item" onclick="openEditReviewModal('${doc.id}')"
+               onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
+               onmouseout="this.style.backgroundColor=''">
+            <div style="display:flex;justify-content:space-between;align-items:start; flex-wrap:wrap; gap:1rem; margin-bottom:0.8rem;">
+              <div style="flex:1;">
+                <strong style="font-size:1.1rem;">${d.guestName || 'Anonymous'}</strong>
                 <span class="badge badge-${badge}" style="margin-left:8px;">${d.rating}/5</span>
               </div>
-              <button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button>
+              <div style="display:flex; gap:0.5rem;" onclick="event.stopPropagation();">
+                <button class="btn btn-secondary" onclick="openEditReviewModal('${doc.id}')">Edit</button>
+                <button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button>
+              </div>
             </div>
-            <p style="margin:0.6rem 0;color:var(--color-text-secondary);">${d.comment || '—'}</p>
+            <p style="margin:0.6rem 0 1rem; line-height:1.6; white-space:pre-wrap; word-break:break-word;">
+              ${d.comment ? d.comment.replace(/\n/g, '<br>') : '—'}
+            </p>
             <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:0.85rem;">
               <span class="badge badge-primary">${d.platform || '?'}</span>
               <span style="color:var(--color-text-secondary);">Checkout: ${checkoutStr}</span>
@@ -1174,7 +1607,10 @@
     }
   }
 
-  function openReviewModal() { document.getElementById('reviewModal').classList.add('active'); }
+  function openReviewModal() { 
+    document.getElementById('reviewModal').classList.add('active'); 
+  }
+
   function closeReviewModal() {
     document.getElementById('reviewModal').classList.remove('active');
     document.getElementById('reviewForm')?.reset();
@@ -1209,7 +1645,6 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // Update property stats
       const propDoc = await db.collection('properties').doc(propertyId).get();
       const currentData = propDoc.data();
       const oldCount = currentData.totalReviews || 0;
@@ -1224,9 +1659,90 @@
 
       closeReviewModal();
       await renderReviewsPage(document.getElementById('mainContent'));
-      navigateTo('analytics'); // refresh analytics
+      navigateTo('analytics');
     } catch (err) {
       alert("Error: " + err.message);
+    }
+  }
+
+  async function openEditReviewModal(id) {
+    try {
+      const reviewDoc = await db.collection('reviews').doc(id).get();
+      if (!reviewDoc.exists) return alert("Review not found");
+
+      const data = reviewDoc.data();
+
+      const form = document.getElementById('editReviewForm');
+      form.reviewId.value = id;
+      form.guestName.value = data.guestName || '';
+      form.rating.value = data.rating || '';
+      form.platform.value = data.platform || '';
+      form.comment.value = data.comment || '';
+
+      if (data.checkoutDate) {
+        const date = data.checkoutDate.toDate ? data.checkoutDate.toDate() : new Date(data.checkoutDate);
+        form.checkoutDate.value = date.toISOString().split('T')[0];
+      }
+
+      const snap = await db.collection('properties').get();
+      let html = '';
+      snap.forEach(doc => {
+        const selected = doc.id === data.propertyId ? 'selected' : '';
+        html += `<option value="${doc.id}" ${selected}>${doc.data().propertyName}</option>`;
+      });
+      document.getElementById('editReviewPropertySelect').innerHTML = html;
+
+      document.getElementById('editReviewModal').classList.add('active');
+    } catch (err) {
+      alert("Error loading review: " + err.message);
+    }
+  }
+
+  function closeEditReviewModal() {
+    document.getElementById('editReviewModal').classList.remove('active');
+    document.getElementById('editReviewForm')?.reset();
+  }
+
+  async function updateReview(e) {
+    e.preventDefault();
+    const form = e.target;
+    const reviewId = form.reviewId.value;
+    const propertyId = form.propertyId.value;
+
+    try {
+      const rating = Number(form.rating.value);
+      const checkoutDateStr = form.checkoutDate.value;
+      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(checkoutDateStr));
+      const reviewMonth = checkoutDateStr.substring(0, 7);
+
+      await db.collection('reviews').doc(reviewId).update({
+        propertyId,
+        guestName: form.guestName.value.trim(),
+        rating,
+        platform: form.platform.value,
+        comment: form.comment.value.trim(),
+        checkoutDate,
+        reviewMonth,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
+      let totalRating = 0;
+      reviewsSnap.forEach(r => totalRating += Number(r.data().rating) || 0);
+      const count = reviewsSnap.size;
+      const avg = count > 0 ? Math.round((totalRating / count) * 10) / 10 : 0;
+
+      await db.collection('properties').doc(propertyId).update({
+        totalReviews: count,
+        averageRating: avg,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      closeEditReviewModal();
+      await renderReviewsPage(document.getElementById('mainContent'));
+      navigateTo('analytics');
+    } catch (err) {
+      alert("Update failed: " + err.message);
     }
   }
 
@@ -1237,6 +1753,7 @@
       const reviewData = reviewDoc.data();
       const propertyId = reviewData.propertyId;
       await db.collection('reviews').doc(id).delete();
+
       if (propertyId) {
         const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
         if (reviewsSnap.empty) {
@@ -1257,7 +1774,9 @@
     }
   }
 
-  // Action Plans (unchanged)
+  // ─────────────────────────────────────────────
+  // ACTION PLANS (unchanged - no row click added here)
+  // ─────────────────────────────────────────────
   async function renderActionsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Action Plans</h1></div>
@@ -1282,6 +1801,7 @@
           </table>
         </div>
       </div>
+
       <div id="actionModal" class="modal-overlay">
         <div class="modal">
           <div class="modal-header">
@@ -1375,6 +1895,7 @@
     document.getElementById('actionModal').classList.remove('active');
     document.getElementById('actionForm')?.reset();
   }
+
   async function saveAction(e) {
     e.preventDefault();
     const form = e.target;
@@ -1396,6 +1917,7 @@
       alert("Error: " + err.message);
     }
   }
+
   async function deleteAction(id) {
     if (!confirm("Delete action?")) return;
     try {
@@ -1415,6 +1937,7 @@
       alert('Please select both dates');
     }
   }
+
   function clearDateFilter() {
     dateFilterFrom = null;
     dateFilterTo = null;
@@ -1453,7 +1976,7 @@
     init();
   }
 
-  // Expose functions
+  // Expose functions to window
   window.navigateTo = navigateTo;
   window.toggleTheme = toggleTheme;
   window.applyDateFilter = applyDateFilter;
@@ -1462,10 +1985,16 @@
   window.openPropertyModal = openPropertyModal;
   window.closePropertyModal = closePropertyModal;
   window.saveProperty = saveProperty;
+  window.openEditPropertyModal = openEditPropertyModal;
+  window.closeEditPropertyModal = closeEditPropertyModal;
+  window.updateProperty = updateProperty;
   window.deleteProperty = deleteProperty;
   window.openReviewModal = openReviewModal;
   window.closeReviewModal = closeReviewModal;
   window.saveReview = saveReview;
+  window.openEditReviewModal = openEditReviewModal;
+  window.closeEditReviewModal = closeEditReviewModal;
+  window.updateReview = updateReview;
   window.deleteReview = deleteReview;
   window.openActionModal = openActionModal;
   window.closeActionModal = closeActionModal;
