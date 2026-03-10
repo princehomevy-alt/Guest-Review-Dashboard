@@ -6,6 +6,7 @@
   <title>Guest Review Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
@@ -40,6 +41,133 @@
       background-color: var(--color-bg);
       color: var(--color-text-primary);
       transition: all 0.2s;
+    }
+
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--color-primary), #0891b2);
+    }
+
+    .login-card {
+      background-color: var(--color-bg);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--color-primary), #0891b2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 30px;
+      margin: 0 auto 1rem;
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 14px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      padding: 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      background-color: var(--color-bg);
+      color: var(--color-text-primary);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: white;
+      margin-top: 1rem;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-primary-dark);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 14px;
+    }
+
+    .alert-danger {
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--color-danger);
+    }
+
+    .alert-info {
+      background-color: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.3);
+      color: var(--color-primary);
     }
 
     .app-container {
@@ -108,12 +236,42 @@
       color: white;
     }
 
+    .nav-item.admin {
+      color: var(--color-warning);
+    }
+
     .sidebar-footer {
       padding-top: 1.5rem;
       border-top: 1px solid var(--color-border);
       display: flex;
+      flex-direction: column;
       gap: 1rem;
-      align-items: center;
+    }
+
+    .user-info {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      padding: 0.5rem;
+      border-radius: 6px;
+      background-color: var(--color-bg);
+    }
+
+    .user-email {
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-bottom: 0.25rem;
+      word-break: break-all;
+    }
+
+    .btn-logout {
+      background-color: var(--color-danger);
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 12px;
+    }
+
+    .btn-logout:hover {
+      background-color: #dc2626;
     }
 
     .theme-toggle {
@@ -200,37 +358,15 @@
     .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
     .grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
-    .btn {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
+    .btn-primary-nav {
       background-color: var(--color-primary);
       color: white;
+      margin-bottom: 20px;
+      width: auto;
     }
 
-    .btn-primary:hover {
+    .btn-primary-nav:hover {
       background-color: var(--color-primary-dark);
-    }
-
-    .btn-secondary {
-      background-color: var(--color-bg-secondary);
-      color: var(--color-text-primary);
-      border: 1px solid var(--color-border);
-    }
-
-    .btn-danger {
-      background-color: var(--color-danger);
-      color: white;
     }
 
     .table {
@@ -270,11 +406,6 @@
       font-weight: 600;
     }
 
-    .badge-primary {
-      background-color: rgba(37, 99, 235, 0.1);
-      color: var(--color-primary);
-    }
-
     .badge-success {
       background-color: rgba(16, 185, 129, 0.1);
       color: var(--color-success);
@@ -290,41 +421,9 @@
       color: var(--color-warning);
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .form-input,
-    .form-select,
-    .form-textarea {
-      padding: 10px;
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 14px;
-      background-color: var(--color-bg);
-      color: var(--color-text-primary);
-    }
-
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .form-textarea {
-      min-height: 100px;
-      resize: vertical;
+    .badge-primary {
+      background-color: rgba(37, 99, 235, 0.1);
+      color: var(--color-primary);
     }
 
     .modal-overlay {
@@ -386,6 +485,35 @@
       gap: 1rem;
     }
 
+    .btn-secondary {
+      background-color: var(--color-bg-secondary);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border);
+      width: auto;
+    }
+
+    .btn-danger {
+      background-color: var(--color-danger);
+      color: white;
+      width: auto;
+    }
+
+    .btn-success {
+      background-color: var(--color-success);
+      color: white;
+      width: auto;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: var(--color-text-secondary);
+    }
+
     .loading {
       display: flex;
       align-items: center;
@@ -407,18 +535,32 @@
       to { transform: rotate(360deg); }
     }
 
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 1.5rem;
-      text-align: center;
-      color: var(--color-text-secondary);
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 1.5rem;
     }
 
     .table-container {
       overflow-x: auto;
+    }
+
+    .platform-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    #loginScreen {
+      display: flex;
+    }
+
+    #appScreen {
+      display: none;
+    }
+
+    #pendingApprovalScreen {
+      display: none;
     }
 
     @media (max-width: 768px) {
@@ -446,69 +588,309 @@
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-icon">D</div>
-        <div class="sidebar-brand-text">
-          <div style="font-size: 14px; font-weight: bold;">Reviews</div>
-          <div style="font-size: 11px; color: var(--color-text-secondary);">Dashboard</div>
-        </div>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">D</div>
+        <h1 class="login-title">Guest Review Dashboard</h1>
+        <p class="login-subtitle">Sign in to your account</p>
       </div>
+
+      <div id="loginError" class="alert alert-danger" style="display: none;"></div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+      </form>
+
+      <div style="text-align: center; margin-top: 1rem; font-size: 12px; color: var(--color-text-secondary);">
+        <p>Don't have an account? <a href="#" onclick="toggleSignup(event)" style="color: var(--color-primary); text-decoration: none;">Create one</a></p>
+      </div>
+
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none; margin-top: 1rem;">
+        <h3 style="font-size: 16px; margin-bottom: 1rem;">Create New Account</h3>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="signupEmail" class="form-input" placeholder="your@email.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="signupPassword" class="form-input" placeholder="Create a password" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" id="signupConfirm" class="form-input" placeholder="Confirm password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Account</button>
+        <button type="button" class="btn btn-secondary" onclick="toggleSignup(event)" style="margin-top: 0.5rem;">Back to Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pending Approval Screen -->
+  <div id="pendingApprovalScreen" class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">⏳</div>
+        <h1 class="login-title">Awaiting Approval</h1>
+        <p class="login-subtitle">Your account is pending admin approval</p>
+      </div>
+
+      <div class="alert alert-info">
+        Your account has been created successfully. An administrator will review your request and grant access shortly. Please check back later or contact your administrator.
+      </div>
+
+      <button class="btn btn-secondary" onclick="handleLogout()" style="width: 100%;">Logout</button>
+    </div>
+  </div>
+
+  <!-- App Screen -->
+  <div id="appScreen">
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-icon">D</div>
+          <div class="sidebar-brand-text">
+            <div style="font-size: 14px; font-weight: bold;">Reviews</div>
+            <div style="font-size: 11px; color: var(--color-text-secondary);">Dashboard</div>
+          </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+          <button class="nav-item active" id="dashboardBtn" onclick="navigateTo('dashboard')">Dashboard</button>
+          <button class="nav-item" id="propertiesBtn" onclick="navigateTo('properties')">Properties</button>
+          <button class="nav-item" id="reviewsBtn" onclick="navigateTo('reviews')">Reviews</button>
+          <button class="nav-item" id="actionsBtn" onclick="navigateTo('actions')">Action Plans</button>
+          <button class="nav-item admin" id="adminBtn" onclick="navigateTo('admin')" style="display: none;">⚙️ User Approvals</button>
+        </nav>
+        
+        <div class="sidebar-footer">
+          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">M</button>
+          
+          <div class="user-info">
+            <div class="user-email" id="userEmail">user@email.com</div>
+            <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Signed in</div>
+            <button class="btn btn-logout" onclick="handleLogout()">Logout</button>
+          </div>
+        </div>
+      </aside>
       
-      <nav class="sidebar-nav">
-        <button class="nav-item active" id="dashboardBtn" onclick="navigateTo('dashboard')">Dashboard</button>
-        <button class="nav-item" id="propertiesBtn" onclick="navigateTo('properties')">Properties</button>
-        <button class="nav-item" id="reviewsBtn" onclick="navigateTo('reviews')">Reviews</button>
-        <button class="nav-item" id="actionsBtn" onclick="navigateTo('actions')">Action Plans</button>
-      </nav>
-      
-      <div class="sidebar-footer">
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">M</button>
-        <div style="flex: 1; color: var(--color-text-secondary); font-size: 12px;">
-          <div id="statusIndicator">Loading...</div>
-          <div id="firebaseStatus" style="margin-top: 8px; color: var(--color-success);">Connecting...</div>
+      <main class="main-content" id="mainContent">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>Loading Dashboard...</span>
+          </div>
         </div>
-      </div>
-    </aside>
-    
-    <main class="main-content" id="mainContent">
-      <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
-        <div class="loading">
-          <div class="spinner"></div>
-          <span>Initializing Dashboard...</span>
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 
   <script>
-    // Firebase Configuration - UPDATED WITH YOUR CREDENTIALS
+    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
+      apiKey: "AIzaSyCV96bacuKJH7ba1g_AU_NvGYzKg0w11A",
       authDomain: "guestreviewdashboard.firebaseapp.com",
       projectId: "guestreviewdashboard",
-      storageBucket: "guestreviewdashboard.firebasestorage.app",
+      storageBucket: "guestreviewdashboard.appspot.com",
       messagingSenderId: "726657937453",
-      appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
+      appId: "1:726657937453:web:f07dfc6273467d8051c8a4"
     };
 
     let db;
+    let auth;
+    let currentUser = null;
     let currentPage = 'dashboard';
+    let isAdmin = false;
+
+    const PLATFORMS = ['Airbnb', 'Booking.com', 'Vrbo', 'Direct'];
 
     // Initialize Firebase
     function initializeFirebase() {
       try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
+        auth = firebase.auth();
+        
+        auth.onAuthStateChanged(async user => {
+          if (user) {
+            currentUser = user;
+            const userData = await checkUserApproval(user.uid);
+            
+            if (userData && userData.approved) {
+              isAdmin = userData.isAdmin || false;
+              document.getElementById('loginScreen').style.display = 'none';
+              document.getElementById('pendingApprovalScreen').style.display = 'none';
+              document.getElementById('appScreen').style.display = 'block';
+              document.getElementById('userEmail').textContent = user.email;
+              document.getElementById('adminBtn').style.display = isAdmin ? 'block' : 'none';
+              navigateTo('dashboard');
+            } else {
+              document.getElementById('loginScreen').style.display = 'none';
+              document.getElementById('appScreen').style.display = 'none';
+              document.getElementById('pendingApprovalScreen').style.display = 'flex';
+            }
+          } else {
+            currentUser = null;
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('pendingApprovalScreen').style.display = 'none';
+          }
+        });
+        
         console.log('Firebase initialized successfully');
-        updateStatus('Connected', 'success');
         return true;
       } catch (error) {
         console.error('Firebase error:', error);
-        updateStatus('Connection Error', 'error');
         return false;
       }
+    }
+
+    // User Approval System
+    async function checkUserApproval(uid) {
+      try {
+        const doc = await db.collection('users').doc(uid).get();
+        return doc.data();
+      } catch (error) {
+        console.error('Error checking user approval:', error);
+        return null;
+      }
+    }
+
+    async function createUserRecord(uid, email) {
+      try {
+        await db.collection('users').doc(uid).set({
+          email: email,
+          approved: false,
+          isAdmin: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error creating user record:', error);
+      }
+    }
+
+    // Authentication Functions
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+      const errorDiv = document.getElementById('loginError');
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      errorDiv.style.display = 'none';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        
+        if (error.code === 'auth/user-not-found') {
+          errorDiv.textContent = 'No account found with this email. Create one instead.';
+        } else if (error.code === 'auth/wrong-password') {
+          errorDiv.textContent = 'Incorrect password. Try again.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorDiv.textContent = 'Invalid email format.';
+        } else {
+          errorDiv.textContent = 'Login failed: ' + error.message;
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    function toggleSignup(event) {
+      event.preventDefault();
+      document.getElementById('loginForm').style.display = 
+        document.getElementById('loginForm').style.display === 'none' ? 'block' : 'none';
+      document.getElementById('signupForm').style.display = 
+        document.getElementById('signupForm').style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function handleSignup(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const confirm = document.getElementById('signupConfirm').value;
+      const errorDiv = document.getElementById('loginError');
+
+      if (password !== confirm) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Passwords do not match.';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Password must be at least 6 characters.';
+        return;
+      }
+
+      try {
+        const result = await auth.createUserWithEmailAndPassword(email, password);
+        await createUserRecord(result.user.uid, email);
+        alert('Account created! Waiting for admin approval.');
+        toggleSignup(event);
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        
+        if (error.code === 'auth/email-already-in-use') {
+          errorDiv.textContent = 'This email is already in use.';
+        } else if (error.code === 'auth/weak-password') {
+          errorDiv.textContent = 'Password is too weak. Use at least 6 characters.';
+        } else {
+          errorDiv.textContent = 'Signup failed: ' + error.message;
+        }
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await auth.signOut();
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+      } catch (error) {
+        alert('Logout failed: ' + error.message);
+      }
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      
+      const themeBtn = document.getElementById('themeToggle');
+      themeBtn.textContent = newTheme === 'light' ? 'M' : 'L';
+    }
+
+    function initializeTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('themeToggle').textContent = savedTheme === 'light' ? 'M' : 'L';
     }
 
     // Navigation
@@ -534,44 +916,13 @@
         case 'actions':
           renderActionsPage(container);
           break;
+        case 'admin':
+          renderAdminPage(container);
+          break;
       }
     }
 
-    // Theme Toggle
-    function toggleTheme() {
-      const html = document.documentElement;
-      const currentTheme = html.getAttribute('data-theme') || 'light';
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      
-      html.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      
-      const themeBtn = document.getElementById('themeToggle');
-      themeBtn.textContent = newTheme === 'light' ? 'M' : 'L';
-    }
-
-    function initializeTheme() {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      document.getElementById('themeToggle').textContent = savedTheme === 'light' ? 'M' : 'L';
-    }
-
-    function updateStatus(message, type = 'info') {
-      const indicator = document.getElementById('statusIndicator');
-      const statusEl = document.getElementById('firebaseStatus');
-      
-      indicator.textContent = message;
-      
-      if (type === 'success') {
-        statusEl.innerHTML = 'Connected';
-        statusEl.style.color = 'var(--color-success)';
-      } else if (type === 'error') {
-        statusEl.innerHTML = 'Error';
-        statusEl.style.color = 'var(--color-danger)';
-      }
-    }
-
-    // Dashboard Page
+    // Dashboard Page with Charts
     async function renderDashboard(container) {
       container.innerHTML = `
         <div class="page-header">
@@ -600,12 +951,44 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Welcome to Guest Review Dashboard</h3>
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Reviews by Platform</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="platformChart"></canvas>
+            </div>
           </div>
-          <p>Your professional operational intelligence dashboard is ready!</p>
-          <p style="margin-top: 1rem; color: var(--color-text-secondary);">Use the navigation menu to manage properties, add reviews, and track action plans.</p>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Rating Distribution</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="ratingChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Top Properties by Reviews</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="propertiesChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Issues by Category</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="issuesChart"></canvas>
+            </div>
+          </div>
         </div>
       `;
 
@@ -613,16 +996,38 @@
       try {
         const reviewsSnapshot = await db.collection('reviews').get();
         const propertiesSnapshot = await db.collection('properties').get();
+        const actionsSnapshot = await db.collection('actionPlans').get();
         
         let totalReviews = reviewsSnapshot.size;
         let totalProperties = propertiesSnapshot.size;
         let lowRatings = 0;
         let totalRating = 0;
+        let platformCounts = { 'Airbnb': 0, 'Booking.com': 0, 'Vrbo': 0, 'Direct': 0 };
+        let ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let propertyCounts = {};
+        let issueCounts = {};
 
         reviewsSnapshot.forEach(doc => {
           const rating = doc.data().rating || 0;
           totalRating += rating;
           if (rating <= 2) lowRatings++;
+          
+          const platform = doc.data().platform || 'Unknown';
+          if (platformCounts.hasOwnProperty(platform)) {
+            platformCounts[platform]++;
+          }
+          
+          ratingCounts[rating]++;
+        });
+
+        propertiesSnapshot.forEach(doc => {
+          const name = doc.data().propertyName;
+          propertyCounts[name] = doc.data().totalReviews || 0;
+        });
+
+        actionsSnapshot.forEach(doc => {
+          const issue = doc.data().issueCategory || 'Unknown';
+          issueCounts[issue] = (issueCounts[issue] || 0) + 1;
         });
 
         const avgRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
@@ -631,19 +1036,121 @@
         document.getElementById('avgRating').textContent = avgRating;
         document.getElementById('lowRatings').textContent = lowRatings;
         document.getElementById('totalProperties').textContent = totalProperties;
+
+        // Create charts
+        setTimeout(() => {
+          createPlatformChart(platformCounts);
+          createRatingChart(ratingCounts);
+          createPropertiesChart(propertyCounts);
+          createIssuesChart(issueCounts);
+        }, 100);
+
       } catch (error) {
         console.error('Error loading dashboard:', error);
       }
     }
 
-    // Properties Page
+    function createPlatformChart(data) {
+      const ctx = document.getElementById('platformChart');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            label: 'Reviews',
+            data: Object.values(data),
+            backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function createRatingChart(data) {
+      const ctx = document.getElementById('ratingChart');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+          datasets: [{
+            data: [data[1], data[2], data[3], data[4], data[5]],
+            backgroundColor: ['#ef4444', '#f59e0b', '#fbbf24', '#a3e635', '#10b981']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    function createPropertiesChart(data) {
+      const ctx = document.getElementById('propertiesChart');
+      if (!ctx) return;
+      
+      const sortedProps = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sortedProps.map(p => p[0]),
+          datasets: [{
+            label: 'Total Reviews',
+            data: sortedProps.map(p => p[1]),
+            backgroundColor: '#2563eb',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function createIssuesChart(data) {
+      const ctx = document.getElementById('issuesChart');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            label: 'Issues',
+            data: Object.values(data),
+            backgroundColor: '#ef4444',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Properties Page - Auto Multi-Platform
     async function renderPropertiesPage(container) {
       let html = `
         <div class="page-header">
           <h1 class="page-title">Properties Management</h1>
         </div>
         
-        <button class="btn btn-primary" onclick="openPropertyModal()" style="margin-bottom: 20px;">Add New Property</button>
+        <button class="btn btn-primary-nav" onclick="openPropertyModal()">Add New Property</button>
         
         <div class="card">
           <div class="card-header">
@@ -656,13 +1163,14 @@
                   <th>Name</th>
                   <th>Location</th>
                   <th>Type</th>
+                  <th>Platforms</th>
                   <th>Reviews</th>
                   <th>Avg Rating</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="propertiesTableBody">
-                <tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+                <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td></tr>
               </tbody>
             </table>
           </div>
@@ -692,7 +1200,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Unit Type</label>
-                  <select name="unitType" class="form-select" required>
+                  <select name="unitType" class="form-input" required>
                     <option value="">Select type</option>
                     <option value="Studio">Studio</option>
                     <option value="1BR">1BR</option>
@@ -701,18 +1209,12 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Platform</label>
-                  <select name="platform" class="form-select" required>
-                    <option value="">Select platform</option>
-                    <option value="Airbnb">Airbnb</option>
-                    <option value="Booking.com">Booking.com</option>
-                    <option value="Direct">Direct</option>
-                  </select>
-                </div>
-                <div class="form-group">
                   <label class="form-label">Owner</label>
                   <input type="text" name="owner" class="form-input" required />
                 </div>
+                <p style="font-size: 12px; color: var(--color-text-secondary); margin-top: 1rem;">
+                  ✓ This property will automatically be listed on all 4 platforms: Airbnb, Booking.com, Vrbo, and Direct Booking
+                </p>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
@@ -733,7 +1235,7 @@
         const tbody = document.getElementById('propertiesTableBody');
         
         if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No properties yet</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No properties yet</td></tr>';
           return;
         }
 
@@ -745,6 +1247,14 @@
               <td><strong>${data.propertyName}</strong></td>
               <td>${data.location}</td>
               <td>${data.unitType}</td>
+              <td>
+                <div class="platform-badges">
+                  <span class="badge badge-primary">Airbnb</span>
+                  <span class="badge badge-primary">Booking.com</span>
+                  <span class="badge badge-primary">Vrbo</span>
+                  <span class="badge badge-primary">Direct</span>
+                </div>
+              </td>
               <td>${data.totalReviews || 0}</td>
               <td>${(data.averageRating || 0).toFixed(1)}</td>
               <td>
@@ -778,7 +1288,7 @@
         location: form.location.value,
         city: form.city.value,
         unitType: form.unitType.value,
-        platform: form.platform.value,
+        platforms: PLATFORMS,
         owner: form.owner.value,
         status: 'Active',
         totalReviews: 0,
@@ -790,7 +1300,7 @@
       try {
         await db.collection('properties').add(data);
         closePropertyModal();
-        alert('Property added successfully!');
+        alert('Property added successfully to all 4 platforms!');
         await renderPropertiesPage(document.getElementById('mainContent'));
       } catch (error) {
         alert('Error: ' + error.message);
@@ -799,7 +1309,7 @@
     }
 
     async function deleteProperty(id) {
-      if (confirm('Are you sure you want to delete this property?')) {
+      if (confirm('Are you sure?')) {
         try {
           await db.collection('properties').doc(id).delete();
           await renderPropertiesPage(document.getElementById('mainContent'));
@@ -816,7 +1326,7 @@
           <h1 class="page-title">Review Intelligence</h1>
         </div>
         
-        <button class="btn btn-primary" onclick="openReviewModal()" style="margin-bottom: 20px;">Add New Review</button>
+        <button class="btn btn-primary-nav" onclick="openReviewModal()">Add New Review</button>
         
         <div class="card">
           <div class="card-header">
@@ -841,7 +1351,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Rating</label>
-                  <select name="rating" class="form-select" required>
+                  <select name="rating" class="form-input" required>
                     <option value="">Select rating</option>
                     <option value="1">1 - Poor</option>
                     <option value="2">2 - Fair</option>
@@ -852,24 +1362,17 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Platform</label>
-                  <select name="platform" class="form-select" required>
+                  <select name="platform" class="form-input" required>
                     <option value="">Select platform</option>
                     <option value="Airbnb">Airbnb</option>
                     <option value="Booking.com">Booking.com</option>
+                    <option value="Vrbo">Vrbo</option>
                     <option value="Direct">Direct</option>
                   </select>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Comment</label>
-                  <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Sentiment</label>
-                  <select name="sentiment" class="form-select">
-                    <option value="Neutral">Neutral</option>
-                    <option value="Positive">Positive</option>
-                    <option value="Negative">Negative</option>
-                  </select>
+                  <textarea name="comment" class="form-input" placeholder="Guest feedback..." style="min-height: 100px;"></textarea>
                 </div>
               </div>
               <div class="modal-footer">
@@ -912,9 +1415,6 @@
               <p style="margin-bottom: 0.5rem; color: var(--color-text-secondary);">${data.comment || 'No comment'}</p>
               <div style="font-size: 12px;">
                 <span class="badge badge-primary">${data.platform}</span>
-                <span class="badge badge-${data.sentiment === 'Positive' ? 'success' : data.sentiment === 'Negative' ? 'danger' : 'primary'}" style="margin-left: 0.5rem;">
-                  ${data.sentiment}
-                </span>
               </div>
             </div>
           `;
@@ -940,15 +1440,12 @@
       
       const form = event.target;
       const rating = parseInt(form.rating.value);
-      const ratingCategory = rating <= 2 ? 'Low' : rating <= 4 ? 'Medium' : 'High';
 
       const data = {
         guestName: form.guestName.value,
         rating: rating,
-        ratingCategory: ratingCategory,
         platform: form.platform.value,
         comment: form.comment.value,
-        sentiment: form.sentiment.value,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         archived: false
       };
@@ -960,12 +1457,11 @@
         await renderReviewsPage(document.getElementById('mainContent'));
       } catch (error) {
         alert('Error: ' + error.message);
-        console.error('Save error:', error);
       }
     }
 
     async function deleteReview(id) {
-      if (confirm('Are you sure you want to delete this review?')) {
+      if (confirm('Are you sure?')) {
         try {
           await db.collection('reviews').doc(id).delete();
           await renderReviewsPage(document.getElementById('mainContent'));
@@ -982,7 +1478,7 @@
           <h1 class="page-title">Action Plans</h1>
         </div>
         
-        <button class="btn btn-primary" onclick="openActionModal()" style="margin-bottom: 20px;">Create Action Plan</button>
+        <button class="btn btn-primary-nav" onclick="openActionModal()">Create Action Plan</button>
         
         <div class="card">
           <div class="card-header">
@@ -1018,7 +1514,7 @@
               <div class="modal-body">
                 <div class="form-group">
                   <label class="form-label">Issue Category</label>
-                  <select name="issueCategory" class="form-select" required>
+                  <select name="issueCategory" class="form-input" required>
                     <option value="">Select category</option>
                     <option value="Cleaning">Cleaning</option>
                     <option value="Maintenance">Maintenance</option>
@@ -1029,7 +1525,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Impact Level</label>
-                  <select name="impactLevel" class="form-select" required>
+                  <select name="impactLevel" class="form-input" required>
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
                     <option value="High">High</option>
@@ -1041,14 +1537,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Action Description</label>
-                  <textarea name="actionDescription" class="form-textarea" required></textarea>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Status</label>
-                  <select name="status" class="form-select">
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                  </select>
+                  <textarea name="actionDescription" class="form-input" required style="min-height: 100px;"></textarea>
                 </div>
               </div>
               <div class="modal-footer">
@@ -1083,7 +1572,7 @@
               <td><strong>${data.issueCategory}</strong></td>
               <td><span class="badge badge-${data.impactLevel === 'High' ? 'danger' : 'warning'}">${data.impactLevel}</span></td>
               <td>${data.assignedTo}</td>
-              <td><span class="badge badge-${data.status === 'Completed' ? 'success' : 'primary'}">${data.status || 'Pending'}</span></td>
+              <td><span class="badge badge-${data.status === 'Completed' ? 'success' : 'warning'}">${data.status || 'Pending'}</span></td>
               <td>
                 <button class="btn btn-danger" onclick="deleteAction('${doc.id}')" style="font-size: 12px;">Delete</button>
               </td>
@@ -1115,10 +1604,8 @@
         impactLevel: form.impactLevel.value,
         assignedTo: form.assignedTo.value,
         actionDescription: form.actionDescription.value,
-        status: form.status.value,
-        frequency: 1,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        resolvedAt: null
+        status: 'Pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
       try {
@@ -1128,12 +1615,11 @@
         await renderActionsPage(document.getElementById('mainContent'));
       } catch (error) {
         alert('Error: ' + error.message);
-        console.error('Save error:', error);
       }
     }
 
     async function deleteAction(id) {
-      if (confirm('Are you sure you want to delete this action plan?')) {
+      if (confirm('Are you sure?')) {
         try {
           await db.collection('actionPlans').doc(id).delete();
           await renderActionsPage(document.getElementById('mainContent'));
@@ -1143,17 +1629,105 @@
       }
     }
 
+    // Admin Page - User Approvals
+    async function renderAdminPage(container) {
+      container.innerHTML = `
+        <div class="page-header">
+          <h1 class="page-title">⚙️ User Approvals</h1>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Pending User Approvals</h3>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="4" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      loadUsers();
+    }
+
+    async function loadUsers() {
+      try {
+        const snapshot = await db.collection('users').get();
+        const tbody = document.getElementById('usersTableBody');
+        
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No users yet</td></tr>';
+          return;
+        }
+
+        let rows = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const createdDate = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : '-';
+          const badge = data.approved ? 'success' : 'warning';
+          const status = data.approved ? 'Approved' : 'Pending';
+          
+          rows += `
+            <tr>
+              <td><strong>${data.email}</strong></td>
+              <td><span class="badge badge-${badge}">${status}</span></td>
+              <td>${createdDate}</td>
+              <td>
+                ${!data.approved ? `<button class="btn btn-success" onclick="approveUser('${doc.id}')" style="font-size: 12px;">Approve</button>` : '<span style="color: var(--color-text-secondary);">Approved</span>'}
+                <button class="btn btn-danger" onclick="rejectUser('${doc.id}')" style="font-size: 12px; margin-left: 0.5rem;">Reject</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.innerHTML = rows;
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
+
+    async function approveUser(uid) {
+      if (confirm('Approve this user?')) {
+        try {
+          await db.collection('users').doc(uid).update({
+            approved: true
+          });
+          await renderAdminPage(document.getElementById('mainContent'));
+          alert('User approved!');
+        } catch (error) {
+          alert('Error: ' + error.message);
+        }
+      }
+    }
+
+    async function rejectUser(uid) {
+      if (confirm('Reject this user?')) {
+        try {
+          await db.collection('users').doc(uid).delete();
+          await renderAdminPage(document.getElementById('mainContent'));
+          alert('User rejected!');
+        } catch (error) {
+          alert('Error: ' + error.message);
+        }
+      }
+    }
+
     // Initialize App
-    async function initializeApp() {
+    function initializeApp() {
       try {
         initializeTheme();
-        const success = initializeFirebase();
-        
-        if (success) {
-          navigateTo('dashboard');
-        } else {
-          alert('Failed to initialize Firebase');
-        }
+        initializeFirebase();
       } catch (error) {
         console.error('Initialization error:', error);
       }
@@ -1162,6 +1736,10 @@
     // Global functions
     window.navigateTo = navigateTo;
     window.toggleTheme = toggleTheme;
+    window.handleLogin = handleLogin;
+    window.handleSignup = handleSignup;
+    window.handleLogout = handleLogout;
+    window.toggleSignup = toggleSignup;
     window.openPropertyModal = openPropertyModal;
     window.closePropertyModal = closePropertyModal;
     window.saveProperty = saveProperty;
@@ -1174,6 +1752,8 @@
     window.closeActionModal = closeActionModal;
     window.saveAction = saveAction;
     window.deleteAction = deleteAction;
+    window.approveUser = approveUser;
+    window.rejectUser = rejectUser;
 
     // Start
     if (document.readyState === 'loading') {
