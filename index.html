@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   
   <!-- 🔒 LOAD CONFIG FILE FIRST (from config.js) -->
-  <script src="config.js"></script>
+
 
   <style>
     :root {
@@ -328,12 +328,16 @@
 </div>
 
 <script>
-  // 🔒 firebaseConfig is loaded from config.js file
-  // Check if it's loaded
-  if (typeof firebaseConfig === 'undefined') {
-    alert('❌ ERROR: config.js not found!\n\nMake sure config.js is in the same folder as index.html');
-    throw new Error('firebaseConfig not defined - config.js missing!');
-  }
+  // 🔒 Firebase config from GitHub Secrets (environment variable)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
+    authDomain: "guestreviewdashboard.firebaseapp.com",
+    projectId: "guestreviewdashboard",
+    storageBucket: "guestreviewdashboard.firebasestorage.app",
+    messagingSenderId: "726657937453",
+    appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
+  };
+</script>
 
   let db;
   let currentPage = 'dashboard';
