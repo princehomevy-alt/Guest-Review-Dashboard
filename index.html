@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -7,9 +11,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-  
-  <!-- 🔒 LOAD CONFIG FILE FIRST (from config.js) -->
-
 
   <style>
     :root {
@@ -171,7 +172,10 @@
       border-bottom: 2px solid var(--color-border);
     }
     .table th, .table td { padding: 1rem; text-align: left; }
-    .table tbody tr { cursor: pointer; transition: background 0.15s; }
+    .table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
     .table tbody tr:hover { background: rgba(37,99,235,0.07); }
     .badge {
       display: inline-flex;
@@ -327,8 +331,258 @@
   </main>
 </div>
 
+<!-- Property Modals -->
+<div id="propertyModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Add New Property</h3>
+      <button class="modal-close" onclick="closePropertyModal()">×</button>
+    </div>
+    <form id="propertyForm" onsubmit="saveProperty(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="propertyName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Type</label>
+          <select name="unitType" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option value="">Select...</option>
+            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" name="owner" class="form-input" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Property</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editPropertyModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Property</h3>
+      <button class="modal-close" onclick="closeEditPropertyModal()">×</button>
+    </div>
+    <form id="editPropertyForm" onsubmit="updateProperty(event)">
+      <div class="modal-body">
+        <input type="hidden" name="propertyId">
+        <div class="form-group">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="propertyName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="city" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Type</label>
+          <select name="unitType" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option value="">Select...</option>
+            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" name="owner" class="form-input" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Review Modals -->
+<div id="reviewModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Review</h3>
+      <button class="modal-close" onclick="closeReviewModal()">×</button>
+    </div>
+    <form id="reviewForm" onsubmit="saveReview(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="reviewPropertySelect" class="form-select" required>
+            <option value="">Select Property...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input type="text" name="guestName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <select name="rating" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Checkout Date *</label>
+          <input type="date" name="checkoutDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comment</label>
+          <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editReviewModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Review</h3>
+      <button class="modal-close" onclick="closeEditReviewModal()">×</button>
+    </div>
+    <form id="editReviewForm" onsubmit="updateReview(event)">
+      <div class="modal-body">
+        <input type="hidden" name="reviewId">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input type="text" name="guestName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <select name="rating" class="form-select" required>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select name="platform" class="form-select" required>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Checkout Date</label>
+          <input type="date" name="checkoutDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comment</label>
+          <textarea name="comment" class="form-textarea"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Action Plans Modal (unchanged) -->
+<div id="actionModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">New Action Plan</h3>
+      <button class="modal-close" onclick="closeActionModal()">×</button>
+    </div>
+    <form id="actionForm" onsubmit="saveAction(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="actionPropertySelect" class="form-select" required>
+            <option value="">Select Property...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Category</label>
+          <select name="issueCategory" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impact Level</label>
+          <select name="impactLevel" class="form-select" required>
+            <option>Low</option><option>Medium</option><option>High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned To</label>
+          <input type="text" name="assignedTo" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="actionDescription" class="form-textarea" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
-  // 🔒 Firebase config from GitHub Secrets (environment variable)
   const firebaseConfig = {
     apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
     authDomain: "guestreviewdashboard.firebaseapp.com",
@@ -337,7 +591,6 @@
     messagingSenderId: "726657937453",
     appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
   };
-</script>
 
   let db;
   let currentPage = 'dashboard';
@@ -714,8 +967,970 @@
     }
   }
 
-  // ... [REST OF THE CODE CONTINUES - IDENTICAL TO YOUR ORIGINAL]
-  // I'll add this in next part to keep message length manageable
+  // ─────────────────────────────────────────────
+  // ANALYTICS PAGE
+  // ─────────────────────────────────────────────
+  async function renderAnalyticsPage(container) {
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">Property Analytics</h1>
+        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Identify top performers, problem areas, and improvement opportunities</p>
+      </div>
+      <div id="analyticsContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Loading analytics...</span>
+        </div>
+      </div>
+    `;
+
+    try {
+      const propsSnap = await db.collection('properties').get();
+      const reviewsSnap = await db.collection('reviews').get();
+
+      const analytics = {};
+      propsSnap.forEach(doc => {
+        analytics[doc.id] = {
+          name: doc.data().propertyName,
+          reviews: [],
+          totalReviews: 0,
+          avgRating: 0,
+          lowRatings: 0,
+          highRatings: 0,
+          monthlyReviews: 0,
+          monthlyLowRatings: 0,
+          monthlyAvgRating: 0
+        };
+      });
+
+      reviewsSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.propertyId && analytics[d.propertyId]) {
+          analytics[d.propertyId].reviews.push(d);
+        }
+      });
+
+      const now = new Date();
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+      for (let propId in analytics) {
+        const prop = analytics[propId];
+        if (prop.reviews.length > 0) {
+          let totalRating = 0;
+          let monthlyTotalRating = 0;
+          let monthlyCount = 0;
+          let monthlyLow = 0;
+
+          prop.reviews.forEach(rev => {
+            const rating = Number(rev.rating) || 0;
+            totalRating += rating;
+            if (rating <= 2) prop.lowRatings++;
+            if (rating >= 4) prop.highRatings++;
+
+            let revMonth = rev.reviewMonth;
+            if (!revMonth && rev.checkoutDate) {
+              const dt = rev.checkoutDate.toDate ? rev.checkoutDate.toDate() : new Date(rev.checkoutDate);
+              revMonth = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+            }
+            if (revMonth === currentMonthKey) {
+              monthlyCount++;
+              monthlyTotalRating += rating;
+              if (rating <= 2) monthlyLow++;
+            }
+          });
+
+          prop.totalReviews = prop.reviews.length;
+          prop.avgRating = Math.round((totalRating / prop.reviews.length) * 10) / 10;
+
+          if (monthlyCount > 0) {
+            prop.monthlyAvgRating = Math.round((monthlyTotalRating / monthlyCount) * 10) / 10;
+            prop.monthlyReviews = monthlyCount;
+            prop.monthlyLowRatings = monthlyLow;
+          }
+        }
+      }
+
+      const topPerformers = Object.entries(analytics)
+        .filter(([id, p]) => p.totalReviews > 0)
+        .sort((a, b) => b[1].avgRating - a[1].avgRating)
+        .slice(0, 5);
+
+      const needsImprovement = Object.entries(analytics)
+        .filter(([id, p]) => p.totalReviews > 0 && p.avgRating < 3.5)
+        .sort((a, b) => a[1].avgRating - b[1].avgRating);
+
+      const negativeReviews = Object.entries(analytics)
+        .filter(([id, p]) => p.lowRatings > 0)
+        .sort((a, b) => b[1].lowRatings - a[1].lowRatings);
+
+      let html = `
+        <div class="grid grid-3">
+          <div class="metric-card">
+            <div class="metric-label">Total Properties</div>
+            <div class="metric-value">${Object.keys(analytics).length}</div>
+          </div>
+          <div class="metric-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <div class="metric-label">Top Performers</div>
+            <div class="metric-value">${topPerformers.length}</div>
+          </div>
+          <div class="metric-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            <div class="metric-label">Needs Improvement</div>
+            <div class="metric-value">${needsImprovement.length}</div>
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">⭐ Top-Performing Properties</h3></div>
+            <div id="topPerformersSection"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">🔴 Properties with Negative Reviews</h3></div>
+            <div id="negativeReviewsSection"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">⚠️ Properties Needing Improvement</h3></div>
+          <div id="improvementSection"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">🚨 Monthly Risk Properties (Current Month)</h3></div>
+          <div id="monthlyRiskSection"></div>
+        </div>
+      `;
+
+      container.querySelector('#analyticsContent').innerHTML = html;
+
+      let topHtml = topPerformers.length === 0 
+        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">Add reviews to see top performers</p>'
+        : topPerformers.map(([id, prop]) => `
+            <div class="property-card" style="border-left: 4px solid var(--color-success);">
+              <div class="property-name">${prop.name}</div>
+              <div class="property-stats">
+                <div class="stat"><div class="stat-label">Rating</div><div class="stat-value" style="color:var(--color-success);">${prop.avgRating}⭐</div></div>
+                <div class="stat"><div class="stat-label">Reviews</div><div class="stat-value">${prop.totalReviews}</div></div>
+                <div class="stat"><div class="stat-label">Positive</div><div class="stat-value" style="color:var(--color-success);">${prop.highRatings}</div></div>
+              </div>
+            </div>
+          `).join('');
+      document.getElementById('topPerformersSection').innerHTML = topHtml;
+
+      let negativeHtml = negativeReviews.length === 0 
+        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">No properties with negative reviews 🎉</p>'
+        : negativeReviews.map(([id, prop]) => `
+            <div class="property-card" style="border-left: 4px solid var(--color-danger);">
+              <div class="property-name">${prop.name}</div>
+              <div class="property-stats">
+                <div class="stat"><div class="stat-label">Rating</div><div class="stat-value" style="color:var(--color-danger);">${prop.avgRating}⭐</div></div>
+                <div class="stat"><div class="stat-label">Low Reviews</div><div class="stat-value" style="color:var(--color-danger);">${prop.lowRatings}</div></div>
+                <div class="stat"><div class="stat-label">Total</div><div class="stat-value">${prop.totalReviews}</div></div>
+              </div>
+            </div>
+          `).join('');
+      document.getElementById('negativeReviewsSection').innerHTML = negativeHtml;
+
+      let improvementHtml = needsImprovement.length === 0 
+        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">All properties are performing well! 🚀</p>'
+        : needsImprovement.map(([id, prop]) => {
+            const percentLow = prop.totalReviews > 0 ? Math.round((prop.lowRatings / prop.totalReviews) * 100) : 0;
+            return `
+              <div class="property-card" style="border-left: 4px solid var(--color-warning);">
+                <div class="property-name">${prop.name}</div>
+                <div class="property-stats">
+                  <div class="stat"><div class="stat-label">Current Rating</div><div class="stat-value" style="color:var(--color-warning);">${prop.avgRating}⭐</div></div>
+                  <div class="stat"><div class="stat-label">Total Reviews</div><div class="stat-value">${prop.totalReviews}</div></div>
+                  <div class="stat"><div class="stat-label">Low Rating %</div><div class="stat-value" style="color:var(--color-danger);">${percentLow}%</div></div>
+                </div>
+                <p style="margin-top:1rem;font-size:0.9rem;color:var(--color-text-secondary);">📝 <strong>Action:</strong> Review recent feedback and create action plans.</p>
+              </div>
+            `;
+          }).join('');
+      document.getElementById('improvementSection').innerHTML = improvementHtml;
+
+      const monthlyRisks = Object.entries(analytics)
+        .filter(([id, p]) => p.monthlyReviews > 2 && (p.monthlyLowRatings / p.monthlyReviews) > 0.25)
+        .sort((a, b) => (b[1].monthlyLowRatings / b[1].monthlyReviews) - (a[1].monthlyLowRatings / a[1].monthlyReviews));
+
+      let riskHtml = monthlyRisks.length === 0 
+        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">No high-risk properties this month 🎉</p>'
+        : monthlyRisks.map(([id, prop]) => {
+            const lowPct = Math.round((prop.monthlyLowRatings / prop.monthlyReviews) * 100);
+            return `
+              <div class="property-card" style="border-left: 4px solid var(--color-danger);">
+                <div class="property-name">${prop.name}</div>
+                <div class="property-stats">
+                  <div class="stat"><div class="stat-label">This Month Reviews</div><div class="stat-value">${prop.monthlyReviews}</div></div>
+                  <div class="stat"><div class="stat-label">Low Ratings</div><div class="stat-value" style="color:var(--color-danger);">${prop.monthlyLowRatings} (${lowPct}%)</div></div>
+                  <div class="stat"><div class="stat-label">Monthly Avg</div><div class="stat-value" style="color:var(--color-warning);">${prop.monthlyAvgRating}⭐</div></div>
+                </div>
+                <p style="margin-top:1rem;font-size:0.9rem;color:var(--color-text-secondary);">⚠️ Immediate action recommended.</p>
+              </div>
+            `;
+          }).join('');
+      document.getElementById('monthlyRiskSection').innerHTML = riskHtml;
+
+    } catch (err) {
+      console.error("Analytics error:", err);
+      container.querySelector('#analyticsContent').innerHTML = `<p style="color:var(--color-danger);">Error: ${err.message}</p>`;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // PROPERTIES PAGE + CLICKABLE ROWS
+  // ─────────────────────────────────────────────
+  async function renderPropertiesPage(container) {
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">Properties</h1>
+        <div style="margin-top:1rem; display:flex; gap:1rem;">
+          <input type="text" id="propertySearch" class="form-input" placeholder="Search properties..." style="flex:1; max-width:300px;" onkeyup="filterProperties()">
+          <button class="btn btn-primary" onclick="openPropertyModal()">+ Add Property</button>
+        </div>
+      </div>
+      <div class="card" style="display:flex; flex-direction:column; height:60vh;">
+        <div class="card-header">
+          <h3 class="card-title">All Properties</h3>
+        </div>
+        <div class="table-container" style="overflow-x:auto; overflow-y:auto; flex:1;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Reviews</th>
+                <th>Avg Rating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="propertiesTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:3rem;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="propertyModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Add New Property</h3>
+            <button class="modal-close" onclick="closePropertyModal()">×</button>
+          </div>
+          <form id="propertyForm" onsubmit="saveProperty(event)">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property Name</label>
+                <input type="text" name="propertyName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit Type</label>
+                <select name="unitType" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select name="platform" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Owner</label>
+                <input type="text" name="owner" class="form-input" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Property</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="editPropertyModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit Property</h3>
+            <button class="modal-close" onclick="closeEditPropertyModal()">×</button>
+          </div>
+          <form id="editPropertyForm" onsubmit="updateProperty(event)">
+            <div class="modal-body">
+              <input type="hidden" name="propertyId">
+              <div class="form-group">
+                <label class="form-label">Property Name</label>
+                <input type="text" name="propertyName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit Type</label>
+                <select name="unitType" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select name="platform" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Owner</label>
+                <input type="text" name="owner" class="form-input" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    await loadProperties();
+  }
+
+  async function loadProperties() {
+    try {
+      const snap = await db.collection('properties').get();
+      const tbody = document.getElementById('propertiesTableBody');
+      if (snap.empty) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;">No properties yet</td></tr>';
+        return;
+      }
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        html += `
+          <tr onclick="openEditPropertyModal('${doc.id}')"
+              onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
+              onmouseout="this.style.backgroundColor=''">
+            <td><strong>${d.propertyName || '—'}</strong></td>
+            <td>${d.location || '—'}</td>
+            <td>${d.unitType || '—'}</td>
+            <td>${d.totalReviews || 0}</td>
+            <td>${Number(d.averageRating || 0).toFixed(1)}</td>
+            <td onclick="event.stopPropagation();">
+              <button class="btn btn-secondary" onclick="event.stopPropagation(); openEditPropertyModal('${doc.id}')">Edit</button>
+              <button class="btn btn-danger" onclick="event.stopPropagation(); deleteProperty('${doc.id}')">Delete</button>
+            </td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function openPropertyModal() { 
+    document.getElementById('propertyModal').classList.add('active'); 
+  }
+
+  function closePropertyModal() {
+    document.getElementById('propertyModal').classList.remove('active');
+    document.getElementById('propertyForm')?.reset();
+  }
+
+  async function saveProperty(e) {
+    e.preventDefault();
+    const form = e.target;
+    try {
+      await db.collection('properties').add({
+        propertyName: form.propertyName.value.trim(),
+        location: form.location.value.trim(),
+        city: form.city.value.trim(),
+        unitType: form.unitType.value,
+        platform: form.platform.value,
+        owner: form.owner.value.trim(),
+        totalReviews: 0,
+        averageRating:0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closePropertyModal();
+      await renderPropertiesPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Error saving property: " + err.message);
+    }
+  }
+
+  async function openEditPropertyModal(id) {
+    try {
+      const doc = await db.collection('properties').doc(id).get();
+      if (!doc.exists) return alert("Property not found");
+
+      const data = doc.data();
+      const form = document.getElementById('editPropertyForm');
+      form.propertyId.value = id;
+      form.propertyName.value = data.propertyName || '';
+      form.location.value = data.location || '';
+      form.city.value = data.city || '';
+      form.unitType.value = data.unitType || '';
+      form.platform.value = data.platform || '';
+      form.owner.value = data.owner || '';
+
+      document.getElementById('editPropertyModal').classList.add('active');
+    } catch (err) {
+      alert("Error loading property: " + err.message);
+    }
+  }
+
+  function closeEditPropertyModal() {
+    document.getElementById('editPropertyModal').classList.remove('active');
+    document.getElementById('editPropertyForm')?.reset();
+  }
+
+  async function updateProperty(e) {
+    e.preventDefault();
+    const form = e.target;
+    const id = form.propertyId.value;
+    try {
+      await db.collection('properties').doc(id).update({
+        propertyName: form.propertyName.value.trim(),
+        location: form.location.value.trim(),
+        city: form.city.value.trim(),
+        unitType: form.unitType.value,
+        platform: form.platform.value,
+        owner: form.owner.value.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeEditPropertyModal();
+      await renderPropertiesPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Update failed: " + err.message);
+    }
+  }
+
+  async function deleteProperty(id) {
+    if (!confirm("Delete this property?")) return;
+    try {
+      await db.collection('properties').doc(id).delete();
+      await renderPropertiesPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Delete failed: " + err.message);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // REVIEWS PAGE + CLICKABLE REVIEWS
+  // ─────────────────────────────────────────────
+  async function renderReviewsPage(container) {
+    container.innerHTML = `
+      <div class="page-header"><h1 class="page-title">Reviews</h1></div>
+      <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Recent Reviews</h3></div>
+        <div id="reviewsList" style="padding:1rem 0;"></div>
+      </div>
+
+      <div id="reviewModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Add Review</h3>
+            <button class="modal-close" onclick="closeReviewModal()">×</button>
+          </div>
+          <form id="reviewForm" onsubmit="saveReview(event)">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="reviewPropertySelect" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guest Name</label>
+                <input type="text" name="guestName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rating</label>
+                <select name="rating" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option value="1">1 - Poor</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="3">3 - Good</option>
+                  <option value="4">4 - Very Good</option>
+                  <option value="5">5 - Excellent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select name="platform" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Airbnb</option>
+                  <option>Booking.com</option>
+                  <option>Vrbo</option>
+                  <option>Direct</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Checkout Date *</label>
+                <input type="date" name="checkoutDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="editReviewModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit Review</h3>
+            <button class="modal-close" onclick="closeEditReviewModal()">×</button>
+          </div>
+          <form id="editReviewForm" onsubmit="updateReview(event)">
+            <div class="modal-body">
+              <input type="hidden" name="reviewId">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guest Name</label>
+                <input type="text" name="guestName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rating</label>
+                <select name="rating" class="form-select" required>
+                  <option value="1">1 - Poor</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="3">3 - Good</option>
+                  <option value="4">4 - Very Good</option>
+                  <option value="5">5 - Excellent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select name="platform" class="form-select" required>
+                  <option>Airbnb</option>
+                  <option>Booking.com</option>
+                  <option>Vrbo</option>
+                  <option>Direct</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Checkout Date</label>
+                <input type="date" name="checkoutDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-textarea"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    await loadReviewsDropdown();
+    await loadReviews();
+  }
+
+  async function loadReviewsDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      const select = document.getElementById('reviewPropertySelect');
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => {
+        html += `<option value="${doc.id}">${doc.data().propertyName}</option>`;
+      });
+      select.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadReviews() {
+    try {
+      const snap = await db.collection('reviews').orderBy('createdAt','desc').get();
+      const container = document.getElementById('reviewsList');
+      if (snap.empty) {
+        container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--color-text-secondary);">No reviews yet</div>';
+        return;
+      }
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const badge = d.rating <= 2 ? 'danger' : d.rating <= 4 ? 'warning' : 'success';
+        const checkoutStr = d.checkoutDate && d.checkoutDate.toDate
+          ? d.checkoutDate.toDate().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})
+          : 'N/A';
+
+        html += `
+          <div class="review-item" onclick="openEditReviewModal('${doc.id}')"
+               onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
+               onmouseout="this.style.backgroundColor=''">
+            <div style="display:flex;justify-content:space-between;align-items:start; flex-wrap:wrap; gap:1rem; margin-bottom:0.8rem;">
+              <div style="flex:1;">
+                <strong style="font-size:1.1rem;">${d.guestName || 'Anonymous'}</strong>
+                <span class="badge badge-${badge}" style="margin-left:8px;">${d.rating}/5</span>
+              </div>
+              <div style="display:flex; gap:0.5rem;" onclick="event.stopPropagation();">
+                <button class="btn btn-secondary" onclick="openEditReviewModal('${doc.id}')">Edit</button>
+                <button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button>
+              </div>
+            </div>
+            <p style="margin:0.6rem 0 1rem; line-height:1.6; white-space:pre-wrap; word-break:break-word;">
+              ${d.comment ? d.comment.replace(/\n/g, '<br>') : '—'}
+            </p>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:0.85rem;">
+              <span class="badge badge-primary">${d.platform || '?'}</span>
+              <span style="color:var(--color-text-secondary);">Checkout: ${checkoutStr}</span>
+            </div>
+          </div>`;
+      });
+      container.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function openReviewModal() { 
+    document.getElementById('reviewModal').classList.add('active'); 
+  }
+
+  function closeReviewModal() {
+    document.getElementById('reviewModal').classList.remove('active');
+    document.getElementById('reviewForm')?.reset();
+  }
+
+  async function saveReview(e) {
+    e.preventDefault();
+    const form = e.target;
+    const propertyId = document.getElementById('reviewPropertySelect').value;
+    if (!propertyId) {
+      alert('Please select a property');
+      return;
+    }
+    const checkoutDateStr = form.checkoutDate.value;
+    if (!checkoutDateStr) {
+      alert('Please select checkout date');
+      return;
+    }
+    try {
+      const rating = Number(form.rating.value);
+      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(checkoutDateStr));
+      const reviewMonth = checkoutDateStr.substring(0, 7);
+
+      await db.collection('reviews').add({
+        propertyId: propertyId,
+        guestName: form.guestName.value.trim(),
+        rating: rating,
+        platform: form.platform.value,
+        comment: form.comment.value.trim(),
+        checkoutDate: checkoutDate,
+        reviewMonth: reviewMonth,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      const propDoc = await db.collection('properties').doc(propertyId).get();
+      const currentData = propDoc.data();
+      const oldCount = currentData.totalReviews || 0;
+      const oldRating = currentData.averageRating || 0;
+      const newCount = oldCount + 1;
+      const newRating = ((oldRating * oldCount) + rating) / newCount;
+      await db.collection('properties').doc(propertyId).update({
+        totalReviews: newCount,
+        averageRating: Math.round(newRating * 10) / 10,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      closeReviewModal();
+      await renderReviewsPage(document.getElementById('mainContent'));
+      navigateTo('analytics');
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function openEditReviewModal(id) {
+    try {
+      const reviewDoc = await db.collection('reviews').doc(id).get();
+      if (!reviewDoc.exists) return alert("Review not found");
+
+      const data = reviewDoc.data();
+
+      const form = document.getElementById('editReviewForm');
+      form.reviewId.value = id;
+      form.guestName.value = data.guestName || '';
+      form.rating.value = data.rating || '';
+      form.platform.value = data.platform || '';
+      form.comment.value = data.comment || '';
+
+      if (data.checkoutDate) {
+        const date = data.checkoutDate.toDate ? data.checkoutDate.toDate() : new Date(data.checkoutDate);
+        form.checkoutDate.value = date.toISOString().split('T')[0];
+      }
+
+      const snap = await db.collection('properties').get();
+      let html = '';
+      snap.forEach(doc => {
+        const selected = doc.id === data.propertyId ? 'selected' : '';
+        html += `<option value="${doc.id}" ${selected}>${doc.data().propertyName}</option>`;
+      });
+      document.getElementById('editReviewPropertySelect').innerHTML = html;
+
+      document.getElementById('editReviewModal').classList.add('active');
+    } catch (err) {
+      alert("Error loading review: " + err.message);
+    }
+  }
+
+  function closeEditReviewModal() {
+    document.getElementById('editReviewModal').classList.remove('active');
+    document.getElementById('editReviewForm')?.reset();
+  }
+
+  async function updateReview(e) {
+    e.preventDefault();
+    const form = e.target;
+    const reviewId = form.reviewId.value;
+    const propertyId = form.propertyId.value;
+
+    try {
+      const rating = Number(form.rating.value);
+      const checkoutDateStr = form.checkoutDate.value;
+      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(checkoutDateStr));
+      const reviewMonth = checkoutDateStr.substring(0, 7);
+
+      await db.collection('reviews').doc(reviewId).update({
+        propertyId,
+        guestName: form.guestName.value.trim(),
+        rating,
+        platform: form.platform.value,
+        comment: form.comment.value.trim(),
+        checkoutDate,
+        reviewMonth,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
+      let totalRating = 0;
+      reviewsSnap.forEach(r => totalRating += Number(r.data().rating) || 0);
+      const count = reviewsSnap.size;
+      const avg = count > 0 ? Math.round((totalRating / count) * 10) / 10 : 0;
+
+      await db.collection('properties').doc(propertyId).update({
+        totalReviews: count,
+        averageRating: avg,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      closeEditReviewModal();
+      await renderReviewsPage(document.getElementById('mainContent'));
+      navigateTo('analytics');
+    } catch (err) {
+      alert("Update failed: " + err.message);
+    }
+  }
+
+  async function deleteReview(id) {
+    if (!confirm("Delete review?")) return;
+    try {
+      const reviewDoc = await db.collection('reviews').doc(id).get();
+      const reviewData = reviewDoc.data();
+      const propertyId = reviewData.propertyId;
+      await db.collection('reviews').doc(id).delete();
+
+      if (propertyId) {
+        const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
+        if (reviewsSnap.empty) {
+          await db.collection('properties').doc(propertyId).update({ totalReviews: 0, averageRating: 0 });
+        } else {
+          let totalRating = 0;
+          reviewsSnap.forEach(doc => totalRating += Number(doc.data().rating) || 0);
+          const newRating = Math.round((totalRating / reviewsSnap.size) * 10) / 10;
+          await db.collection('properties').doc(propertyId).update({
+            totalReviews: reviewsSnap.size,
+            averageRating: newRating
+          });
+        }
+      }
+      await renderReviewsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Delete failed");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // ACTION PLANS (unchanged - no row click added here)
+  // ─────────────────────────────────────────────
+  async function renderActionsPage(container) {
+    container.innerHTML = `
+      <div class="page-header"><h1 class="page-title">Action Plans</h1></div>
+      <button class="btn btn-primary" onclick="openActionModal()">+ Create Action</button>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">All Actions</h3></div>
+        <div class="table-container" style="overflow-x:auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Issue</th>
+                <th>Impact</th>
+                <th>Assigned To</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="actionsTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:3rem;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="actionModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">New Action Plan</h3>
+            <button class="modal-close" onclick="closeActionModal()">×</button>
+          </div>
+          <form id="actionForm" onsubmit="saveAction(event)">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="actionPropertySelect" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Issue Category</label>
+                <select name="issueCategory" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Impact Level</label>
+                <select name="impactLevel" class="form-select" required>
+                  <option>Low</option><option>Medium</option><option>High</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Assigned To</label>
+                <input type="text" name="assignedTo" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="actionDescription" class="form-textarea" required></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    await loadActionsDropdown();
+    await loadActions();
+  }
+
+  async function loadActionsDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      const select = document.getElementById('actionPropertySelect');
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => html += `<option value="${doc.id}">${doc.data().propertyName}</option>`);
+      select.innerHTML = html;
+    } catch (err) { console.error(err); }
+  }
+
+  async function loadActions() {
+    try {
+      const snap = await db.collection('actionPlans').get();
+      const tbody = document.getElementById('actionsTableBody');
+      if (snap.empty) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;">No actions yet</td></tr>';
+        return;
+      }
+      const propsSnap = await db.collection('properties').get();
+      const propsMap = {};
+      propsSnap.forEach(doc => propsMap[doc.id] = doc.data().propertyName);
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const impactColor = d.impactLevel === 'High' ? 'danger' : 'warning';
+        const propName = propsMap[d.propertyId] || 'Unknown';
+        html += `
+          <tr>
+            <td><strong>${propName}</strong></td>
+            <td><strong>${d.issueCategory || '?'}</strong></td>
+            <td><span class="badge badge-${impactColor}">${d.impactLevel}</span></td>
+            <td>${d.assignedTo || '—'}</td>
+            <td><span class="badge badge-primary">${d.status || 'Pending'}</span></td>
+            <td><button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button></td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (err) { console.error(err); }
+  }
+
+  function openActionModal() { document.getElementById('actionModal').classList.add('active'); }
+  function closeActionModal() {
+    document.getElementById('actionModal').classList.remove('active');
+    document.getElementById('actionForm')?.reset();
+  }
+
+  async function saveAction(e) {
+    e.preventDefault();
+    const form = e.target;
+    const propertyId = document.getElementById('actionPropertySelect').value;
+    if (!propertyId) { alert('Please select a property'); return; }
+    try {
+      await db.collection('actionPlans').add({
+        propertyId: propertyId,
+        issueCategory: form.issueCategory.value,
+        impactLevel: form.impactLevel.value,
+        assignedTo: form.assignedTo.value.trim(),
+        actionDescription: form.actionDescription.value.trim(),
+        status: 'Pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeActionModal();
+      await renderActionsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function deleteAction(id) {
+    if (!confirm("Delete action?")) return;
+    try {
+      await db.collection('actionPlans').doc(id).delete();
+      await renderActionsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Delete failed");
+    }
+  }
 
   function applyDateFilter() {
     dateFilterFrom = document.getElementById('dateFrom').value;
@@ -754,7 +1969,7 @@
       document.getElementById('mainContent').innerHTML = `
         <div style="text-align:center; padding:4rem; color:var(--color-danger);">
           <h2>Firebase connection failed</h2>
-          <p>Check that config.js is loaded and has correct credentials.</p>
+          <p>Please check your configuration.</p>
         </div>`;
     }
   }
@@ -765,15 +1980,30 @@
     init();
   }
 
+  // Expose functions to window
   window.navigateTo = navigateTo;
   window.toggleTheme = toggleTheme;
   window.applyDateFilter = applyDateFilter;
   window.clearDateFilter = clearDateFilter;
   window.filterProperties = filterProperties;
+  window.openPropertyModal = openPropertyModal;
+  window.closePropertyModal = closePropertyModal;
+  window.saveProperty = saveProperty;
+  window.openEditPropertyModal = openEditPropertyModal;
+  window.closeEditPropertyModal = closeEditPropertyModal;
+  window.updateProperty = updateProperty;
+  window.deleteProperty = deleteProperty;
+  window.openReviewModal = openReviewModal;
+  window.closeReviewModal = closeReviewModal;
+  window.saveReview = saveReview;
+  window.openEditReviewModal = openEditReviewModal;
+  window.closeEditReviewModal = closeEditReviewModal;
+  window.updateReview = updateReview;
+  window.deleteReview = deleteReview;
+  window.openActionModal = openActionModal;
+  window.closeActionModal = closeActionModal;
+  window.saveAction = saveAction;
+  window.deleteAction = deleteAction;
 </script>
-
-<!-- PLACEHOLDER FOR REMAINING CODE -->
-<!-- Due to file size, the remaining functions (renderAnalyticsPage, renderPropertiesPage, etc.) 
-     are in the full code provided. This is the structure template. -->
 </body>
 </html>
