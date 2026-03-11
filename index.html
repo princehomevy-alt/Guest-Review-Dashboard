@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -11,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -39,6 +36,125 @@
       color: var(--color-text-primary);
       transition: all 0.2s;
     }
+
+    /* LOGIN PAGE STYLES */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--color-primary), #0891b2);
+    }
+    .login-box {
+      background: var(--color-bg);
+      padding: 3rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 400px;
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1rem;
+      background: linear-gradient(135deg, var(--color-primary), #0891b2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+    }
+    .login-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .login-subtitle {
+      color: var(--color-text-secondary);
+      font-size: 0.95rem;
+    }
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .form-label {
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .form-input {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-size: 1rem;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      transition: all 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .login-btn {
+      padding: 0.85rem 1.5rem;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+    }
+    .login-btn:hover {
+      background: var(--color-primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(37,99,235,0.3);
+    }
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .login-error {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid var(--color-danger);
+      color: var(--color-danger);
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .login-error.show {
+      display: block;
+    }
+    .login-loading {
+      display: none;
+      text-align: center;
+    }
+    .spinner-small {
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* DASHBOARD STYLES */
     .app-container {
       display: grid;
       grid-template-columns: 260px 1fr;
@@ -53,6 +169,7 @@
       height: 100vh;
       position: sticky;
       top: 0;
+      overflow-y: auto;
     }
     .sidebar-brand {
       display: flex;
@@ -71,6 +188,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 1.2rem;
     }
     .sidebar-nav {
       flex: 1;
@@ -96,8 +214,29 @@
       padding-top: 1.5rem;
       border-top: 1px solid var(--color-border);
       display: flex;
+      flex-direction: column;
       gap: 12px;
-      align-items: center;
+    }
+    .user-info {
+      font-size: 0.85rem;
+      padding: 0.75rem;
+      background: rgba(37,99,235,0.1);
+      border-radius: 6px;
+      color: var(--color-text-secondary);
+    }
+    .logout-btn {
+      padding: 0.6rem 1rem;
+      background: var(--color-danger);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover {
+      background: #dc2626;
     }
     .theme-toggle {
       background: var(--color-bg-secondary);
@@ -114,7 +253,12 @@
       padding: 1.5rem 2rem;
       overflow-y: auto;
     }
-    .page-header { margin-bottom: 1.75rem; }
+    .page-header { 
+      margin-bottom: 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     .page-title { font-size: 1.8rem; font-weight: 600; }
     .card {
       background: var(--color-bg);
@@ -166,16 +310,15 @@
     .btn-primary:hover { background: var(--color-primary-dark); }
     .btn-secondary { background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
     .btn-danger { background: var(--color-danger); color: white; }
+    .btn-edit { background: var(--color-warning); color: white; }
+    .btn-edit:hover { background: #d97706; }
     .table { width:100%; border-collapse: collapse; font-size: 14px; }
     .table thead {
       background: var(--color-bg-secondary);
       border-bottom: 2px solid var(--color-border);
     }
     .table th, .table td { padding: 1rem; text-align: left; }
-    .table tbody tr {
-      cursor: pointer;
-      transition: background 0.15s;
-    }
+    .table tbody tr { cursor: pointer; transition: background 0.15s; }
     .table tbody tr:hover { background: rgba(37,99,235,0.07); }
     .badge {
       display: inline-flex;
@@ -189,18 +332,6 @@
     .badge-danger { background: rgba(239,68,68,0.1); color: var(--color-danger); }
     .badge-warning { background: rgba(245,158,11,0.1); color: var(--color-warning); }
     .badge-primary { background: rgba(37,99,235,0.1); color: var(--color-primary); }
-    .property-card {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .property-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .property-stats { display: flex; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
-    .stat { display: flex; flex-direction: column; gap: 0.3rem; }
-    .stat-label { font-size: 0.8rem; color: var(--color-text-secondary); }
-    .stat-value { font-size: 1.2rem; font-weight: 600; }
     .modal-overlay {
       display: none;
       position: fixed; inset: 0;
@@ -208,6 +339,7 @@
       z-index: 1000;
       align-items: center;
       justify-content: center;
+      overflow-y: auto;
     }
     .modal-overlay.active { display: flex; }
     .modal {
@@ -217,6 +349,7 @@
       max-width: 520px;
       max-height: 92vh;
       overflow-y: auto;
+      margin: auto;
     }
     .modal-header {
       padding: 1.25rem;
@@ -262,7 +395,6 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .risk-banner {
       background: #fef3c7;
       border: 1px solid #f59e0b;
@@ -274,64 +406,109 @@
       align-items: center;
       gap: 1rem;
     }
-    .review-item {
+    .action-item {
       background: var(--color-bg-secondary);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       padding: 1.25rem;
       margin-bottom: 1rem;
-      cursor: pointer;
-      transition: all 0.15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
     }
-    .review-item:hover {
-      background: rgba(37,99,235,0.07);
-      transform: translateY(-1px);
-    }
+    .action-info { flex: 1; }
+    .action-title { font-weight: 600; margin-bottom: 0.5rem; }
+    .action-desc { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0.5rem 0; }
+    .action-buttons { display: flex; gap: 0.5rem; }
+    .hidden { display: none !important; }
     @media (max-width: 992px) {
       .app-container { grid-template-columns: 1fr; }
-      .sidebar { position: fixed; z-index: 900; transform: translateX(-100%); transition: transform 0.3s; }
+      .sidebar { position: fixed; z-index: 900; transform: translateX(-100%); transition: transform 0.3s; width: 260px; }
       .sidebar.open { transform: translateX(0); }
       .main-content { padding: 1rem; }
       .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .action-item { flex-direction: column; }
+      .action-buttons { width: 100%; gap: 0.5rem; margin-top: 0.75rem; }
+      .action-buttons .btn { flex: 1; }
     }
   </style>
 </head>
 <body>
 
-<div class="app-container">
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">GR</div>
-      <div>
-        <div style="font-weight:600;">Guest Reviews</div>
-        <div style="font-size:0.78rem; opacity:0.7;">Dashboard</div>
-      </div>
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-container">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-icon">🔐</div>
+      <h1 class="login-title">Guest Reviews</h1>
+      <p class="login-subtitle">Admin Dashboard Login</p>
     </div>
-    <nav class="sidebar-nav">
-      <button class="nav-item active" onclick="navigateTo('dashboard')">Dashboard</button>
-      <button class="nav-item" onclick="navigateTo('analytics')">Property Analytics</button>
-      <button class="nav-item" onclick="navigateTo('properties')">Properties</button>
-      <button class="nav-item" onclick="navigateTo('reviews')">Reviews</button>
-      <button class="nav-item" onclick="navigateTo('actions')">Action Plans</button>
-    </nav>
-    <div class="sidebar-footer">
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
-      <div style="font-size:0.82rem; opacity:0.8;">
-        <div id="statusIndicator">Initializing...</div>
-        <div id="firebaseStatus" style="color:var(--color-success);">Connecting...</div>
+    <form id="loginForm" onsubmit="handleLogin(event)" class="login-form">
+      <div id="loginError" class="login-error"></div>
+      
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="loginEmail" class="form-input" placeholder="admin@guestreviews.com" required>
       </div>
-    </div>
-  </aside>
+      
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+      </div>
 
-  <main class="main-content" id="mainContent">
-    <div class="loading">
-      <div class="spinner"></div>
-      <span>Loading dashboard...</span>
+      <div id="loginLoading" class="login-loading">
+        <div class="spinner-small"></div>
+        <span>Logging in...</span>
+      </div>
+
+      <button type="submit" id="loginBtn" class="login-btn">Login</button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--color-text-secondary);">
+      Demo: admin@guestreviews.com / Admin@123456
     </div>
-  </main>
+  </div>
 </div>
 
-<!-- Property Modals -->
+<!-- DASHBOARD PAGE -->
+<div id="dashboardPage" class="hidden">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">GR</div>
+        <div>
+          <div style="font-weight:600;">Guest Reviews</div>
+          <div style="font-size:0.78rem; opacity:0.7;">Dashboard</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="navigateTo('dashboard')">📊 Dashboard</button>
+        <button class="nav-item" onclick="navigateTo('analytics')">📈 Property Analytics</button>
+        <button class="nav-item" onclick="navigateTo('properties')">🏠 Properties</button>
+        <button class="nav-item" onclick="navigateTo('reviews')">⭐ Reviews</button>
+        <button class="nav-item" onclick="navigateTo('actions')">✓ Action Plans</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+        <div class="user-info">
+          <div style="font-weight: 500; margin-bottom: 0.5rem;">Logged in as:</div>
+          <div id="userEmail" style="word-break: break-all;"></div>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading dashboard...</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- PROPERTY MODALS -->
 <div id="propertyModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -341,33 +518,42 @@
     <form id="propertyForm" onsubmit="saveProperty(event)">
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Property Name</label>
+          <label class="form-label">Property Name *</label>
           <input type="text" name="propertyName" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Location</label>
+          <label class="form-label">Location *</label>
           <input type="text" name="location" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">City</label>
+          <label class="form-label">City *</label>
           <input type="text" name="city" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Unit Type</label>
+          <label class="form-label">Unit Type *</label>
           <select name="unitType" class="form-select" required>
             <option value="">Select...</option>
-            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+            <option>Studio</option>
+            <option>1BR</option>
+            <option>2BR</option>
+            <option>3BR</option>
+            <option>4BR</option>
+            <option>Villa</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Platform</label>
+          <label class="form-label">Platform *</label>
           <select name="platform" class="form-select" required>
             <option value="">Select...</option>
-            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+            <option>All Platforms</option>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Owner</label>
+          <label class="form-label">Owner *</label>
           <input type="text" name="owner" class="form-input" required>
         </div>
       </div>
@@ -389,33 +575,40 @@
       <div class="modal-body">
         <input type="hidden" name="propertyId">
         <div class="form-group">
-          <label class="form-label">Property Name</label>
+          <label class="form-label">Property Name *</label>
           <input type="text" name="propertyName" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Location</label>
+          <label class="form-label">Location *</label>
           <input type="text" name="location" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">City</label>
+          <label class="form-label">City *</label>
           <input type="text" name="city" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Unit Type</label>
+          <label class="form-label">Unit Type *</label>
           <select name="unitType" class="form-select" required>
-            <option value="">Select...</option>
-            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
+            <option>Studio</option>
+            <option>1BR</option>
+            <option>2BR</option>
+            <option>3BR</option>
+            <option>4BR</option>
+            <option>Villa</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Platform</label>
+          <label class="form-label">Platform *</label>
           <select name="platform" class="form-select" required>
-            <option value="">Select...</option>
-            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
+            <option>All Platforms</option>
+            <option>Airbnb</option>
+            <option>Booking.com</option>
+            <option>Vrbo</option>
+            <option>Direct</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Owner</label>
+          <label class="form-label">Owner *</label>
           <input type="text" name="owner" class="form-input" required>
         </div>
       </div>
@@ -427,7 +620,7 @@
   </div>
 </div>
 
-<!-- Review Modals -->
+<!-- REVIEW MODALS -->
 <div id="reviewModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -443,11 +636,11 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Guest Name</label>
+          <label class="form-label">Guest Name *</label>
           <input type="text" name="guestName" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Rating</label>
+          <label class="form-label">Rating *</label>
           <select name="rating" class="form-select" required>
             <option value="">Select...</option>
             <option value="1">1 - Poor</option>
@@ -458,7 +651,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Platform</label>
+          <label class="form-label">Platform *</label>
           <select name="platform" class="form-select" required>
             <option value="">Select...</option>
             <option>Airbnb</option>
@@ -478,7 +671,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary">Save Review</button>
       </div>
     </form>
   </div>
@@ -498,11 +691,11 @@
           <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
         </div>
         <div class="form-group">
-          <label class="form-label">Guest Name</label>
+          <label class="form-label">Guest Name *</label>
           <input type="text" name="guestName" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Rating</label>
+          <label class="form-label">Rating *</label>
           <select name="rating" class="form-select" required>
             <option value="1">1 - Poor</option>
             <option value="2">2 - Fair</option>
@@ -512,7 +705,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Platform</label>
+          <label class="form-label">Platform *</label>
           <select name="platform" class="form-select" required>
             <option>Airbnb</option>
             <option>Booking.com</option>
@@ -521,7 +714,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Checkout Date</label>
+          <label class="form-label">Checkout Date *</label>
           <input type="date" name="checkoutDate" class="form-input" required>
         </div>
         <div class="form-group">
@@ -537,7 +730,7 @@
   </div>
 </div>
 
-<!-- Action Plans Modal (unchanged) -->
+<!-- ACTION PLANS MODALS -->
 <div id="actionModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -553,30 +746,102 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Issue Category</label>
+          <label class="form-label">Issue Category *</label>
           <select name="issueCategory" class="form-select" required>
             <option value="">Select...</option>
-            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
+            <option>Cleaning</option>
+            <option>Maintenance</option>
+            <option>Communication</option>
+            <option>Check-in</option>
+            <option>Noise</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Impact Level</label>
+          <label class="form-label">Impact Level *</label>
           <select name="impactLevel" class="form-select" required>
-            <option>Low</option><option>Medium</option><option>High</option>
+            <option value="">Select...</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Assigned To</label>
+          <label class="form-label">Assigned To *</label>
           <input type="text" name="assignedTo" class="form-input" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Description</label>
+          <label class="form-label">Description *</label>
           <textarea name="actionDescription" class="form-textarea" required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status *</label>
+          <select name="status" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Pending</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+          </select>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Create</button>
+        <button type="submit" class="btn btn-primary">Create Action</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editActionModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Action Plan</h3>
+      <button class="modal-close" onclick="closeEditActionModal()">×</button>
+    </div>
+    <form id="editActionForm" onsubmit="updateAction(event)">
+      <div class="modal-body">
+        <input type="hidden" name="actionId">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="editActionPropertySelect" name="propertyId" class="form-select" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Category *</label>
+          <select name="issueCategory" class="form-select" required>
+            <option>Cleaning</option>
+            <option>Maintenance</option>
+            <option>Communication</option>
+            <option>Check-in</option>
+            <option>Noise</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impact Level *</label>
+          <select name="impactLevel" class="form-select" required>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned To *</label>
+          <input type="text" name="assignedTo" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea name="actionDescription" class="form-textarea" required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status *</label>
+          <select name="status" class="form-select" required>
+            <option>Pending</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditActionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </form>
   </div>
@@ -593,33 +858,77 @@
   };
 
   let db;
+  let auth;
+  let currentUser = null;
   let currentPage = 'dashboard';
-  let dateFilterFrom = null;
-  let dateFilterTo = null;
-  let chartInstances = {};
 
   function initializeFirebase() {
     try {
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
-      updateStatus('Connected', 'success');
+      auth = firebase.auth();
+      
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          showDashboard();
+          document.getElementById('userEmail').textContent = user.email;
+          navigateTo('dashboard');
+        } else {
+          showLogin();
+        }
+      });
+      
       return true;
     } catch (err) {
       console.error("Firebase init failed", err);
-      updateStatus('Connection failed', 'error');
       return false;
     }
   }
 
-  function updateStatus(msg, type = 'info') {
-    document.getElementById('statusIndicator').textContent = msg;
-    const el = document.getElementById('firebaseStatus');
-    if (type === 'success') {
-      el.textContent = 'Connected';
-      el.style.color = 'var(--color-success)';
-    } else if (type === 'error') {
-      el.textContent = 'Error';
-      el.style.color = 'var(--color-danger)';
+  function showLogin() {
+    document.getElementById('loginPage').classList.remove('hidden');
+    document.getElementById('dashboardPage').classList.add('hidden');
+  }
+
+  function showDashboard() {
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('dashboardPage').classList.remove('hidden');
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const loginBtn = document.getElementById('loginBtn');
+    const loginLoading = document.getElementById('loginLoading');
+    const loginError = document.getElementById('loginError');
+
+    loginError.classList.remove('show');
+    loginBtn.disabled = true;
+    loginLoading.style.display = 'block';
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      loginLoading.style.display = 'none';
+    } catch (err) {
+      loginLoading.style.display = 'none';
+      loginBtn.disabled = false;
+      loginError.textContent = 'Invalid email or password. Please try again.';
+      loginError.classList.add('show');
+      console.error("Login error:", err);
+    }
+  }
+
+  function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+      auth.signOut().then(() => {
+        currentUser = null;
+        document.getElementById('loginForm').reset();
+        showLogin();
+      }).catch(err => {
+        alert('Logout error: ' + err.message);
+      });
     }
   }
 
@@ -642,6 +951,7 @@
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.querySelector(`[onclick="navigateTo('${page}')"]`).classList.add('active');
     const content = document.getElementById('mainContent');
+    
     if (page === 'dashboard') renderDashboard(content);
     else if (page === 'analytics') renderAnalyticsPage(content);
     else if (page === 'properties') renderPropertiesPage(content);
@@ -649,34 +959,12 @@
     else if (page === 'actions') renderActionsPage(content);
   }
 
-  // ─────────────────────────────────────────────
-  // DASHBOARD
-  // ─────────────────────────────────────────────
+  // ========== DASHBOARD PAGE ==========
   async function renderDashboard(container) {
     container.innerHTML = `
       <div class="page-header">
-        <h1 class="page-title">Executive Overview</h1>
-        <div style="display:flex; gap:1rem; margin-top:1rem; flex-wrap:wrap;">
-          <div>
-            <label style="font-size:0.9rem; color:var(--color-text-secondary);">From Date (Checkout)</label>
-            <input type="date" id="dateFrom" class="form-input" style="width:140px;">
-          </div>
-          <div>
-            <label style="font-size:0.9rem; color:var(--color-text-secondary);">To Date (Checkout)</label>
-            <input type="date" id="dateTo" class="form-input" style="width:140px;">
-          </div>
-          <div style="display:flex; align-items:flex-end;">
-            <button class="btn btn-primary" onclick="applyDateFilter()" style="margin:0;">Filter</button>
-            <button class="btn btn-secondary" onclick="clearDateFilter()" style="margin:0; margin-left:0.5rem;">Clear</button>
-          </div>
-        </div>
+        <h1 class="page-title">Executive Dashboard</h1>
       </div>
-
-      <div id="riskBanner" class="risk-banner">
-        <span style="font-size:2rem;">🚨</span>
-        <div id="riskMessage" style="flex:1; font-weight:500;"></div>
-      </div>
-
       <div class="grid grid-4">
         <div class="metric-card">
           <div class="metric-label">Total Reviews</div>
@@ -691,64 +979,16 @@
           <div class="metric-value" id="lowRatings">—</div>
         </div>
         <div class="metric-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-          <div class="metric-label">Properties</div>
+          <div class="metric-label">Total Properties</div>
           <div class="metric-value" id="totalProperties">—</div>
         </div>
       </div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Month-over-Month Comparison</h3></div>
-          <div style="padding:1.5rem;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-              <div>
-                <div style="font-size:0.85rem; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:0.5px;">THIS MONTH</div>
-                <div style="margin:1rem 0 0.5rem;">
-                  <div style="font-size:2.4rem; font-weight:700;" id="thisMonthReviews">0</div>
-                  <div style="color:var(--color-text-secondary);">Reviews</div>
-                </div>
-                <div style="font-size:1.4rem; font-weight:600;" id="thisMonthAvg">—</div>
-                <div style="color:var(--color-text-secondary);">Avg Rating</div>
-              </div>
-              <div>
-                <div style="font-size:0.85rem; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:0.5px;">LAST MONTH</div>
-                <div style="margin:1rem 0 0.5rem;">
-                  <div style="font-size:2.4rem; font-weight:700;" id="lastMonthReviews">0</div>
-                  <div style="color:var(--color-text-secondary);">Reviews</div>
-                </div>
-                <div style="font-size:1.4rem; font-weight:600;" id="lastMonthAvg">—</div>
-                <div style="color:var(--color-text-secondary);">Avg Rating</div>
-              </div>
-            </div>
-            <div id="momChanges" style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--color-border); display:flex; gap:2rem; justify-content:space-around;"></div>
-          </div>
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Welcome to Your Dashboard</h3>
         </div>
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Monthly Trend (Last 6 Months)</h3></div>
-          <div class="chart-container"><canvas id="monthlyTrendChart"></canvas></div>
-        </div>
-      </div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Reviews by Platform</h3></div>
-          <div class="chart-container"><canvas id="platformChart"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Rating Distribution</h3></div>
-          <div class="chart-container"><canvas id="ratingChart"></canvas></div>
-        </div>
-      </div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Properties by Review Count</h3></div>
-          <div class="chart-container"><canvas id="propertiesChart"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Properties by Average Rating</h3></div>
-          <div class="chart-container"><canvas id="ratingPerPropertyChart"></canvas></div>
-        </div>
+        <p>Manage your guest reviews operational intelligence. Navigate using the sidebar menu to access properties, reviews, and action tracking.</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--color-text-secondary);">Start by adding properties and reviews to see analytics.</p>
       </div>
     `;
 
@@ -758,550 +998,105 @@
         db.collection('properties').get()
       ]);
 
-      let reviewsList = [];
-      revs.forEach(doc => {
-        const d = doc.data();
-        if (d.checkoutDate) {
-          const cd = d.checkoutDate.toDate();
-          let include = true;
-          if (dateFilterFrom) {
-            const fromD = new Date(dateFilterFrom);
-            if (cd < fromD) include = false;
-          }
-          if (dateFilterTo) {
-            const toD = new Date(dateFilterTo);
-            toD.setHours(23,59,59,999);
-            if (cd > toD) include = false;
-          }
-          if (include) reviewsList.push(d);
-        } else {
-          reviewsList.push(d);
-        }
-      });
-
-      let totalReviews = reviewsList.length;
+      let totalReviews = revs.size;
       let totalRating = 0;
       let lowRatings = 0;
-      const platformCount = { Airbnb:0, "Booking.com":0, Direct:0, Vrbo:0 };
-      const ratingCount = {1:0, 2:0, 3:0, 4:0, 5:0};
-      const propReviewsCount = {};
-      const propRatings = {};
 
-      reviewsList.forEach(d => {
-        const r = Number(d.rating) || 0;
+      revs.forEach(d => {
+        const r = Number(d.data().rating) || 0;
         totalRating += r;
         if (r <= 2) lowRatings++;
-        ratingCount[r] = (ratingCount[r] || 0) + 1;
-        const p = d.platform || "Direct";
-        platformCount[p] = (platformCount[p] || 0) + 1;
-        if (d.propertyId) {
-          propReviewsCount[d.propertyId] = (propReviewsCount[d.propertyId] || 0) + 1;
-          propRatings[d.propertyId] = (propRatings[d.propertyId] || 0) + r;
-        }
       });
 
-      const propReviews = {};
-      const propAvgRatings = {};
-      props.forEach(doc => {
-        const d = doc.data();
-        const propName = d.propertyName || "Unnamed";
-        propReviews[propName] = propReviewsCount[doc.id] || 0;
-        const count = propReviewsCount[doc.id] || 0;
-        const total = propRatings[doc.id] || 0;
-        propAvgRatings[propName] = count > 0 ? Math.round((total / count) * 10) / 10 : 0;
-      });
+      const avgRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
 
       document.getElementById('totalReviews').textContent = totalReviews;
-      document.getElementById('avgRating').textContent = totalReviews ? (totalRating / totalReviews).toFixed(1) : "—";
+      document.getElementById('avgRating').textContent = avgRating;
       document.getElementById('lowRatings').textContent = lowRatings;
       document.getElementById('totalProperties').textContent = props.size;
 
-      ['platformChart','ratingChart','propertiesChart','ratingPerPropertyChart','monthlyTrendChart'].forEach(key => {
-        if (chartInstances[key]) chartInstances[key].destroy();
-      });
-
-      const colors = ['#2563eb','#10b981','#f59e0b','#8b5cf6'];
-
-      chartInstances.platformChart = new Chart(document.getElementById('platformChart'), {
-        type: 'bar',
-        data: {
-          labels: Object.keys(platformCount),
-          datasets: [{ label: 'Reviews', data: Object.values(platformCount), backgroundColor: colors, borderRadius: 6 }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
-      });
-
-      chartInstances.ratingChart = new Chart(document.getElementById('ratingChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['1★','2★','3★','4★','5★'],
-          datasets: [{
-            data: [ratingCount[1],ratingCount[2],ratingCount[3],ratingCount[4],ratingCount[5]],
-            backgroundColor: ['#ef4444','#f59e0b','#fbbf24','#84cc16','#10b981']
-          }]
-        },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
-      });
-
-      const topProps = Object.entries(propReviews).sort((a,b)=>b[1]-a[1]).slice(0,6);
-      chartInstances.propertiesChart = new Chart(document.getElementById('propertiesChart'), {
-        type: 'bar',
-        data: {
-          labels: topProps.length > 0 ? topProps.map(([name])=>name) : ['No properties'],
-          datasets: [{ label: 'Reviews', data: topProps.length > 0 ? topProps.map(([,cnt])=>cnt) : [0], backgroundColor: '#2563eb', borderRadius: 6 }]
-        },
-        options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, scales: { x:{ beginAtZero:true } } }
-      });
-
-      const topRatedProps = Object.entries(propAvgRatings)
-        .filter(([name, rating]) => propReviews[name] > 0)
-        .sort((a,b)=>b[1]-a[1])
-        .slice(0,6);
-      chartInstances.ratingPerPropertyChart = new Chart(document.getElementById('ratingPerPropertyChart'), {
-        type: 'bar',
-        data: {
-          labels: topRatedProps.length > 0 ? topRatedProps.map(([name])=>name) : ['No properties'],
-          datasets: [{ label: 'Avg Rating', data: topRatedProps.length > 0 ? topRatedProps.map(([,rating])=>rating) : [0], backgroundColor: '#10b981', borderRadius: 6 }]
-        },
-        options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, scales: { x:{ beginAtZero:true, max:5 } } }
-      });
-
-      const monthGroups = {};
-      reviewsList.forEach(r => {
-        let monthKey = 'unknown';
-        if (r.reviewMonth) {
-          monthKey = r.reviewMonth;
-        } else if (r.checkoutDate) {
-          const dt = r.checkoutDate.toDate();
-          monthKey = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-        }
-        if (!monthGroups[monthKey]) monthGroups[monthKey] = { reviews: 0, totalRating: 0, low: 0 };
-        const rr = Number(r.rating) || 0;
-        monthGroups[monthKey].reviews += 1;
-        monthGroups[monthKey].totalRating += rr;
-        if (rr <= 2) monthGroups[monthKey].low += 1;
-      });
-
-      const sortedMonthKeys = Object.keys(monthGroups).sort().reverse();
-      const recent6 = Object.keys(monthGroups).sort().slice(-6);
-
-      const thisMonthKey = sortedMonthKeys[0] || null;
-      const lastMonthKey = sortedMonthKeys[1] || null;
-      const thisM = thisMonthKey ? monthGroups[thisMonthKey] : {reviews:0, totalRating:0, low:0};
-      const lastM = lastMonthKey ? monthGroups[lastMonthKey] : {reviews:0, totalRating:0, low:0};
-
-      const thisReviews = thisM.reviews;
-      const thisAvg = thisReviews > 0 ? (thisM.totalRating / thisReviews).toFixed(1) : '—';
-      const lastReviews = lastM.reviews;
-      const lastAvg = lastReviews > 0 ? (lastM.totalRating / lastReviews).toFixed(1) : '—';
-      const revChange = lastReviews > 0 ? Math.round(((thisReviews - lastReviews) / lastReviews) * 100) : 0;
-      const avgChange = (thisAvg !== '—' && lastAvg !== '—') ? (parseFloat(thisAvg) - parseFloat(lastAvg)).toFixed(1) : '0';
-
-      document.getElementById('thisMonthReviews').textContent = thisReviews;
-      document.getElementById('thisMonthAvg').textContent = thisAvg;
-      document.getElementById('lastMonthReviews').textContent = lastReviews;
-      document.getElementById('lastMonthAvg').textContent = lastAvg;
-
-      const momHtml = `
-        <div style="text-align:center;">
-          <div style="font-size:0.9rem; color:var(--color-text-secondary);">Reviews</div>
-          <div style="font-size:1.5rem; font-weight:700; color:${revChange>=0?'var(--color-success)':'var(--color-danger)'};">${revChange>=0?'↑':'↓'} ${Math.abs(revChange)}%</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:0.9rem; color:var(--color-text-secondary);">Avg Rating</div>
-          <div style="font-size:1.5rem; font-weight:700; color:${parseFloat(avgChange)>=0?'var(--color-success)':'var(--color-danger)'};">${parseFloat(avgChange)>=0?'↑':'↓'} ${Math.abs(avgChange)}</div>
-        </div>
-      `;
-      document.getElementById('momChanges').innerHTML = momHtml;
-
-      const lowPct = thisReviews > 0 ? Math.round((thisM.low / thisReviews) * 100) : 0;
-      const riskEl = document.getElementById('riskBanner');
-      if (thisReviews > 4 && lowPct > 25) {
-        riskEl.style.display = 'flex';
-        document.getElementById('riskMessage').innerHTML = `High negative feedback this month (${lowPct}% low ratings). Immediate action recommended.`;
-      } else {
-        riskEl.style.display = 'none';
-      }
-
-      chartInstances.monthlyTrendChart = new Chart(document.getElementById('monthlyTrendChart'), {
-        type: 'bar',
-        data: {
-          labels: recent6,
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Reviews',
-              data: recent6.map(k => monthGroups[k].reviews),
-              backgroundColor: '#2563eb',
-              yAxisID: 'y'
-            },
-            {
-              type: 'line',
-              label: 'Avg Rating',
-              data: recent6.map(k => {
-                const g = monthGroups[k];
-                return g.reviews > 0 ? Math.round((g.totalRating / g.reviews) * 10) / 10 : 0;
-              }),
-              borderColor: '#10b981',
-              borderWidth: 4,
-              pointRadius: 5,
-              yAxisID: 'y1'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          scales: {
-            y: { position: 'left', beginAtZero: true, title: { display: true, text: 'Reviews' } },
-            y1: { position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false }, title: { display: true, text: 'Avg Rating' } }
-          },
-          plugins: { legend: { position: 'top' } }
-        }
-      });
-
     } catch (err) {
       console.error("Dashboard error:", err);
-      container.innerHTML += `<p style="color:var(--color-danger);">Error: ${err.message}</p>`;
     }
   }
 
-  // ─────────────────────────────────────────────
-  // ANALYTICS PAGE
-  // ─────────────────────────────────────────────
+  // ========== ANALYTICS PAGE ==========
   async function renderAnalyticsPage(container) {
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">Property Analytics</h1>
-        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Identify top performers, problem areas, and improvement opportunities</p>
       </div>
-      <div id="analyticsContent">
-        <div class="loading">
-          <div class="spinner"></div>
-          <span>Loading analytics...</span>
+      <div class="grid grid-3">
+        <div class="metric-card">
+          <div class="metric-label">Total Properties</div>
+          <div class="metric-value" id="analyticsTotal">—</div>
+        </div>
+        <div class="metric-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <div class="metric-label">Top Performers</div>
+          <div class="metric-value" id="analyticsTop">—</div>
+        </div>
+        <div class="metric-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+          <div class="metric-label">Needs Improvement</div>
+          <div class="metric-value" id="analyticsLow">—</div>
         </div>
       </div>
+      <div id="analyticsContent"></div>
     `;
 
     try {
       const propsSnap = await db.collection('properties').get();
-      const reviewsSnap = await db.collection('reviews').get();
+      const revSnap = await db.collection('reviews').get();
 
-      const analytics = {};
+      let topPerformers = [];
+      let needsImprovement = [];
+
       propsSnap.forEach(doc => {
-        analytics[doc.id] = {
-          name: doc.data().propertyName,
-          reviews: [],
-          totalReviews: 0,
-          avgRating: 0,
-          lowRatings: 0,
-          highRatings: 0,
-          monthlyReviews: 0,
-          monthlyLowRatings: 0,
-          monthlyAvgRating: 0
-        };
-      });
-
-      reviewsSnap.forEach(doc => {
         const d = doc.data();
-        if (d.propertyId && analytics[d.propertyId]) {
-          analytics[d.propertyId].reviews.push(d);
-        }
+        const avgRating = Number(d.averageRating) || 0;
+        if (avgRating >= 4.5) topPerformers.push({...d, id: doc.id});
+        else if (avgRating < 3.5 && d.totalReviews > 0) needsImprovement.push({...d, id: doc.id});
       });
 
-      const now = new Date();
-      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      document.getElementById('analyticsTotal').textContent = propsSnap.size;
+      document.getElementById('analyticsTop').textContent = topPerformers.length;
+      document.getElementById('analyticsLow').textContent = needsImprovement.length;
 
-      for (let propId in analytics) {
-        const prop = analytics[propId];
-        if (prop.reviews.length > 0) {
-          let totalRating = 0;
-          let monthlyTotalRating = 0;
-          let monthlyCount = 0;
-          let monthlyLow = 0;
-
-          prop.reviews.forEach(rev => {
-            const rating = Number(rev.rating) || 0;
-            totalRating += rating;
-            if (rating <= 2) prop.lowRatings++;
-            if (rating >= 4) prop.highRatings++;
-
-            let revMonth = rev.reviewMonth;
-            if (!revMonth && rev.checkoutDate) {
-              const dt = rev.checkoutDate.toDate ? rev.checkoutDate.toDate() : new Date(rev.checkoutDate);
-              revMonth = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-            }
-            if (revMonth === currentMonthKey) {
-              monthlyCount++;
-              monthlyTotalRating += rating;
-              if (rating <= 2) monthlyLow++;
-            }
-          });
-
-          prop.totalReviews = prop.reviews.length;
-          prop.avgRating = Math.round((totalRating / prop.reviews.length) * 10) / 10;
-
-          if (monthlyCount > 0) {
-            prop.monthlyAvgRating = Math.round((monthlyTotalRating / monthlyCount) * 10) / 10;
-            prop.monthlyReviews = monthlyCount;
-            prop.monthlyLowRatings = monthlyLow;
-          }
-        }
+      let html = '<div class="card"><div class="card-header"><h3 class="card-title">⭐ Top Performing Properties (4.5+ rating)</h3></div><div style="padding:1rem;">';
+      if (topPerformers.length === 0) {
+        html += '<p>No top performers yet.</p>';
+      } else {
+        topPerformers.forEach(p => {
+          html += `<div style="padding:0.75rem; border-bottom:1px solid var(--color-border);"><strong>${p.propertyName}</strong> - ${p.averageRating}⭐ (${p.totalReviews} reviews)</div>`;
+        });
       }
+      html += '</div></div>';
 
-      const topPerformers = Object.entries(analytics)
-        .filter(([id, p]) => p.totalReviews > 0)
-        .sort((a, b) => b[1].avgRating - a[1].avgRating)
-        .slice(0, 5);
+      html += '<div class="card"><div class="card-header"><h3 class="card-title">🔴 Properties Needing Improvement (&lt;3.5 rating)</h3></div><div style="padding:1rem;">';
+      if (needsImprovement.length === 0) {
+        html += '<p>All properties are doing well!</p>';
+      } else {
+        needsImprovement.forEach(p => {
+          html += `<div style="padding:0.75rem; border-bottom:1px solid var(--color-border);"><strong>${p.propertyName}</strong> - ${p.averageRating}⭐ (${p.totalReviews} reviews)</div>`;
+        });
+      }
+      html += '</div></div>';
 
-      const needsImprovement = Object.entries(analytics)
-        .filter(([id, p]) => p.totalReviews > 0 && p.avgRating < 3.5)
-        .sort((a, b) => a[1].avgRating - b[1].avgRating);
-
-      const negativeReviews = Object.entries(analytics)
-        .filter(([id, p]) => p.lowRatings > 0)
-        .sort((a, b) => b[1].lowRatings - a[1].lowRatings);
-
-      let html = `
-        <div class="grid grid-3">
-          <div class="metric-card">
-            <div class="metric-label">Total Properties</div>
-            <div class="metric-value">${Object.keys(analytics).length}</div>
-          </div>
-          <div class="metric-card" style="background: linear-gradient(135deg, #10b981, #059669);">
-            <div class="metric-label">Top Performers</div>
-            <div class="metric-value">${topPerformers.length}</div>
-          </div>
-          <div class="metric-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-            <div class="metric-label">Needs Improvement</div>
-            <div class="metric-value">${needsImprovement.length}</div>
-          </div>
-        </div>
-        <div class="grid grid-2">
-          <div class="card">
-            <div class="card-header"><h3 class="card-title">⭐ Top-Performing Properties</h3></div>
-            <div id="topPerformersSection"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><h3 class="card-title">🔴 Properties with Negative Reviews</h3></div>
-            <div id="negativeReviewsSection"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">⚠️ Properties Needing Improvement</h3></div>
-          <div id="improvementSection"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">🚨 Monthly Risk Properties (Current Month)</h3></div>
-          <div id="monthlyRiskSection"></div>
-        </div>
-      `;
-
-      container.querySelector('#analyticsContent').innerHTML = html;
-
-      let topHtml = topPerformers.length === 0 
-        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">Add reviews to see top performers</p>'
-        : topPerformers.map(([id, prop]) => `
-            <div class="property-card" style="border-left: 4px solid var(--color-success);">
-              <div class="property-name">${prop.name}</div>
-              <div class="property-stats">
-                <div class="stat"><div class="stat-label">Rating</div><div class="stat-value" style="color:var(--color-success);">${prop.avgRating}⭐</div></div>
-                <div class="stat"><div class="stat-label">Reviews</div><div class="stat-value">${prop.totalReviews}</div></div>
-                <div class="stat"><div class="stat-label">Positive</div><div class="stat-value" style="color:var(--color-success);">${prop.highRatings}</div></div>
-              </div>
-            </div>
-          `).join('');
-      document.getElementById('topPerformersSection').innerHTML = topHtml;
-
-      let negativeHtml = negativeReviews.length === 0 
-        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">No properties with negative reviews 🎉</p>'
-        : negativeReviews.map(([id, prop]) => `
-            <div class="property-card" style="border-left: 4px solid var(--color-danger);">
-              <div class="property-name">${prop.name}</div>
-              <div class="property-stats">
-                <div class="stat"><div class="stat-label">Rating</div><div class="stat-value" style="color:var(--color-danger);">${prop.avgRating}⭐</div></div>
-                <div class="stat"><div class="stat-label">Low Reviews</div><div class="stat-value" style="color:var(--color-danger);">${prop.lowRatings}</div></div>
-                <div class="stat"><div class="stat-label">Total</div><div class="stat-value">${prop.totalReviews}</div></div>
-              </div>
-            </div>
-          `).join('');
-      document.getElementById('negativeReviewsSection').innerHTML = negativeHtml;
-
-      let improvementHtml = needsImprovement.length === 0 
-        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">All properties are performing well! 🚀</p>'
-        : needsImprovement.map(([id, prop]) => {
-            const percentLow = prop.totalReviews > 0 ? Math.round((prop.lowRatings / prop.totalReviews) * 100) : 0;
-            return `
-              <div class="property-card" style="border-left: 4px solid var(--color-warning);">
-                <div class="property-name">${prop.name}</div>
-                <div class="property-stats">
-                  <div class="stat"><div class="stat-label">Current Rating</div><div class="stat-value" style="color:var(--color-warning);">${prop.avgRating}⭐</div></div>
-                  <div class="stat"><div class="stat-label">Total Reviews</div><div class="stat-value">${prop.totalReviews}</div></div>
-                  <div class="stat"><div class="stat-label">Low Rating %</div><div class="stat-value" style="color:var(--color-danger);">${percentLow}%</div></div>
-                </div>
-                <p style="margin-top:1rem;font-size:0.9rem;color:var(--color-text-secondary);">📝 <strong>Action:</strong> Review recent feedback and create action plans.</p>
-              </div>
-            `;
-          }).join('');
-      document.getElementById('improvementSection').innerHTML = improvementHtml;
-
-      const monthlyRisks = Object.entries(analytics)
-        .filter(([id, p]) => p.monthlyReviews > 2 && (p.monthlyLowRatings / p.monthlyReviews) > 0.25)
-        .sort((a, b) => (b[1].monthlyLowRatings / b[1].monthlyReviews) - (a[1].monthlyLowRatings / a[1].monthlyReviews));
-
-      let riskHtml = monthlyRisks.length === 0 
-        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">No high-risk properties this month 🎉</p>'
-        : monthlyRisks.map(([id, prop]) => {
-            const lowPct = Math.round((prop.monthlyLowRatings / prop.monthlyReviews) * 100);
-            return `
-              <div class="property-card" style="border-left: 4px solid var(--color-danger);">
-                <div class="property-name">${prop.name}</div>
-                <div class="property-stats">
-                  <div class="stat"><div class="stat-label">This Month Reviews</div><div class="stat-value">${prop.monthlyReviews}</div></div>
-                  <div class="stat"><div class="stat-label">Low Ratings</div><div class="stat-value" style="color:var(--color-danger);">${prop.monthlyLowRatings} (${lowPct}%)</div></div>
-                  <div class="stat"><div class="stat-label">Monthly Avg</div><div class="stat-value" style="color:var(--color-warning);">${prop.monthlyAvgRating}⭐</div></div>
-                </div>
-                <p style="margin-top:1rem;font-size:0.9rem;color:var(--color-text-secondary);">⚠️ Immediate action recommended.</p>
-              </div>
-            `;
-          }).join('');
-      document.getElementById('monthlyRiskSection').innerHTML = riskHtml;
+      document.getElementById('analyticsContent').innerHTML = html;
 
     } catch (err) {
       console.error("Analytics error:", err);
-      container.querySelector('#analyticsContent').innerHTML = `<p style="color:var(--color-danger);">Error: ${err.message}</p>`;
     }
   }
 
-  // ─────────────────────────────────────────────
-  // PROPERTIES PAGE + CLICKABLE ROWS
-  // ─────────────────────────────────────────────
+  // ========== PROPERTIES PAGE ==========
   async function renderPropertiesPage(container) {
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">Properties</h1>
-        <div style="margin-top:1rem; display:flex; gap:1rem;">
-          <input type="text" id="propertySearch" class="form-input" placeholder="Search properties..." style="flex:1; max-width:300px;" onkeyup="filterProperties()">
-          <button class="btn btn-primary" onclick="openPropertyModal()">+ Add Property</button>
-        </div>
+        <button class="btn btn-primary" onclick="openPropertyModal()">+ Add Property</button>
       </div>
-      <div class="card" style="display:flex; flex-direction:column; height:60vh;">
-        <div class="card-header">
-          <h3 class="card-title">All Properties</h3>
-        </div>
-        <div class="table-container" style="overflow-x:auto; overflow-y:auto; flex:1;">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Reviews</th>
-                <th>Avg Rating</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="propertiesTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:3rem;">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="propertyModal" class="modal-overlay">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">Add New Property</h3>
-            <button class="modal-close" onclick="closePropertyModal()">×</button>
-          </div>
-          <form id="propertyForm" onsubmit="saveProperty(event)">
-            <div class="modal-body">
-              <div class="form-group">
-                <label class="form-label">Property Name</label>
-                <input type="text" name="propertyName" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Location</label>
-                <input type="text" name="location" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">City</label>
-                <input type="text" name="city" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Unit Type</label>
-                <select name="unitType" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Platform</label>
-                <select name="platform" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Owner</label>
-                <input type="text" name="owner" class="form-input" required>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Property</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <div id="editPropertyModal" class="modal-overlay">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">Edit Property</h3>
-            <button class="modal-close" onclick="closeEditPropertyModal()">×</button>
-          </div>
-          <form id="editPropertyForm" onsubmit="updateProperty(event)">
-            <div class="modal-body">
-              <input type="hidden" name="propertyId">
-              <div class="form-group">
-                <label class="form-label">Property Name</label>
-                <input type="text" name="propertyName" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Location</label>
-                <input type="text" name="location" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">City</label>
-                <input type="text" name="city" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Unit Type</label>
-                <select name="unitType" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Platform</label>
-                <select name="platform" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Owner</label>
-                <input type="text" name="owner" class="form-input" required>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
-          </form>
-        </div>
+      <div class="card">
+        <div id="propertiesList" style="padding:1rem;"></div>
       </div>
     `;
     await loadProperties();
@@ -1310,30 +1105,29 @@
   async function loadProperties() {
     try {
       const snap = await db.collection('properties').get();
-      const tbody = document.getElementById('propertiesTableBody');
+      const container = document.getElementById('propertiesList');
       if (snap.empty) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;">No properties yet</td></tr>';
+        container.innerHTML = '<p>No properties yet. Add your first property to get started.</p>';
         return;
       }
-      let html = '';
+      let html = '<table class="table"><thead><tr><th>Name</th><th>Location</th><th>City</th><th>Unit Type</th><th>Reviews</th><th>Avg Rating</th><th>Actions</th></tr></thead><tbody>';
       snap.forEach(doc => {
         const d = doc.data();
-        html += `
-          <tr onclick="openEditPropertyModal('${doc.id}')"
-              onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
-              onmouseout="this.style.backgroundColor=''">
-            <td><strong>${d.propertyName || '—'}</strong></td>
-            <td>${d.location || '—'}</td>
-            <td>${d.unitType || '—'}</td>
-            <td>${d.totalReviews || 0}</td>
-            <td>${Number(d.averageRating || 0).toFixed(1)}</td>
-            <td onclick="event.stopPropagation();">
-              <button class="btn btn-secondary" onclick="event.stopPropagation(); openEditPropertyModal('${doc.id}')">Edit</button>
-              <button class="btn btn-danger" onclick="event.stopPropagation(); deleteProperty('${doc.id}')">Delete</button>
-            </td>
-          </tr>`;
+        html += `<tr>
+          <td>${d.propertyName || '—'}</td>
+          <td>${d.location || '—'}</td>
+          <td>${d.city || '—'}</td>
+          <td>${d.unitType || '—'}</td>
+          <td>${d.totalReviews || 0}</td>
+          <td>${Number(d.averageRating || 0).toFixed(1)}⭐</td>
+          <td onclick="event.stopPropagation();">
+            <button class="btn btn-edit" onclick="openEditPropertyModal('${doc.id}')">Edit</button>
+            <button class="btn btn-danger" onclick="deleteProperty('${doc.id}')">Delete</button>
+          </td>
+        </tr>`;
       });
-      tbody.innerHTML = html;
+      html += '</tbody></table>';
+      container.innerHTML = html;
     } catch (err) {
       console.error(err);
     }
@@ -1348,6 +1142,28 @@
     document.getElementById('propertyForm')?.reset();
   }
 
+  async function openEditPropertyModal(id) {
+    try {
+      const doc = await db.collection('properties').doc(id).get();
+      const d = doc.data();
+      const form = document.getElementById('editPropertyForm');
+      form.querySelector('[name="propertyId"]').value = id;
+      form.querySelector('[name="propertyName"]').value = d.propertyName;
+      form.querySelector('[name="location"]').value = d.location;
+      form.querySelector('[name="city"]').value = d.city;
+      form.querySelector('[name="unitType"]').value = d.unitType;
+      form.querySelector('[name="platform"]').value = d.platform;
+      form.querySelector('[name="owner"]').value = d.owner;
+      document.getElementById('editPropertyModal').classList.add('active');
+    } catch (err) {
+      alert('Error loading property');
+    }
+  }
+
+  function closeEditPropertyModal() {
+    document.getElementById('editPropertyModal').classList.remove('active');
+  }
+
   async function saveProperty(e) {
     e.preventDefault();
     const form = e.target;
@@ -1360,192 +1176,59 @@
         platform: form.platform.value,
         owner: form.owner.value.trim(),
         totalReviews: 0,
-        averageRating:0,
+        averageRating: 0,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       closePropertyModal();
       await renderPropertiesPage(document.getElementById('mainContent'));
     } catch (err) {
-      alert("Error saving property: " + err.message);
+      alert("Error: " + err.message);
     }
-  }
-
-  async function openEditPropertyModal(id) {
-    try {
-      const doc = await db.collection('properties').doc(id).get();
-      if (!doc.exists) return alert("Property not found");
-
-      const data = doc.data();
-      const form = document.getElementById('editPropertyForm');
-      form.propertyId.value = id;
-      form.propertyName.value = data.propertyName || '';
-      form.location.value = data.location || '';
-      form.city.value = data.city || '';
-      form.unitType.value = data.unitType || '';
-      form.platform.value = data.platform || '';
-      form.owner.value = data.owner || '';
-
-      document.getElementById('editPropertyModal').classList.add('active');
-    } catch (err) {
-      alert("Error loading property: " + err.message);
-    }
-  }
-
-  function closeEditPropertyModal() {
-    document.getElementById('editPropertyModal').classList.remove('active');
-    document.getElementById('editPropertyForm')?.reset();
   }
 
   async function updateProperty(e) {
     e.preventDefault();
     const form = e.target;
-    const id = form.propertyId.value;
+    const id = form.querySelector('[name="propertyId"]').value;
     try {
       await db.collection('properties').doc(id).update({
-        propertyName: form.propertyName.value.trim(),
-        location: form.location.value.trim(),
-        city: form.city.value.trim(),
-        unitType: form.unitType.value,
-        platform: form.platform.value,
-        owner: form.owner.value.trim(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        propertyName: form.querySelector('[name="propertyName"]').value.trim(),
+        location: form.querySelector('[name="location"]').value.trim(),
+        city: form.querySelector('[name="city"]').value.trim(),
+        unitType: form.querySelector('[name="unitType"]').value,
+        platform: form.querySelector('[name="platform"]').value,
+        owner: form.querySelector('[name="owner"]').value.trim()
       });
       closeEditPropertyModal();
       await renderPropertiesPage(document.getElementById('mainContent'));
     } catch (err) {
-      alert("Update failed: " + err.message);
+      alert("Error: " + err.message);
     }
   }
 
   async function deleteProperty(id) {
-    if (!confirm("Delete this property?")) return;
+    if (!confirm("Delete this property? This will also delete all associated reviews and actions.")) return;
     try {
       await db.collection('properties').doc(id).delete();
+      const reviews = await db.collection('reviews').where('propertyId', '==', id).get();
+      reviews.forEach(doc => doc.ref.delete());
+      const actions = await db.collection('actionPlans').where('propertyId', '==', id).get();
+      actions.forEach(doc => doc.ref.delete());
       await renderPropertiesPage(document.getElementById('mainContent'));
     } catch (err) {
-      alert("Delete failed: " + err.message);
+      alert("Error: " + err.message);
     }
   }
 
-  // ─────────────────────────────────────────────
-  // REVIEWS PAGE + CLICKABLE REVIEWS
-  // ─────────────────────────────────────────────
+  // ========== REVIEWS PAGE ==========
   async function renderReviewsPage(container) {
     container.innerHTML = `
-      <div class="page-header"><h1 class="page-title">Reviews</h1></div>
-      <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
+      <div class="page-header">
+        <h1 class="page-title">Reviews</h1>
+        <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
+      </div>
       <div class="card">
-        <div class="card-header"><h3 class="card-title">Recent Reviews</h3></div>
-        <div id="reviewsList" style="padding:1rem 0;"></div>
-      </div>
-
-      <div id="reviewModal" class="modal-overlay">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">Add Review</h3>
-            <button class="modal-close" onclick="closeReviewModal()">×</button>
-          </div>
-          <form id="reviewForm" onsubmit="saveReview(event)">
-            <div class="modal-body">
-              <div class="form-group">
-                <label class="form-label">Property *</label>
-                <select id="reviewPropertySelect" class="form-select" required>
-                  <option value="">Select Property...</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Guest Name</label>
-                <input type="text" name="guestName" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Rating</label>
-                <select name="rating" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option value="1">1 - Poor</option>
-                  <option value="2">2 - Fair</option>
-                  <option value="3">3 - Good</option>
-                  <option value="4">4 - Very Good</option>
-                  <option value="5">5 - Excellent</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Platform</label>
-                <select name="platform" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option>Airbnb</option>
-                  <option>Booking.com</option>
-                  <option>Vrbo</option>
-                  <option>Direct</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Checkout Date *</label>
-                <input type="date" name="checkoutDate" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Comment</label>
-                <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <div id="editReviewModal" class="modal-overlay">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">Edit Review</h3>
-            <button class="modal-close" onclick="closeEditReviewModal()">×</button>
-          </div>
-          <form id="editReviewForm" onsubmit="updateReview(event)">
-            <div class="modal-body">
-              <input type="hidden" name="reviewId">
-              <div class="form-group">
-                <label class="form-label">Property *</label>
-                <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Guest Name</label>
-                <input type="text" name="guestName" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Rating</label>
-                <select name="rating" class="form-select" required>
-                  <option value="1">1 - Poor</option>
-                  <option value="2">2 - Fair</option>
-                  <option value="3">3 - Good</option>
-                  <option value="4">4 - Very Good</option>
-                  <option value="5">5 - Excellent</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Platform</label>
-                <select name="platform" class="form-select" required>
-                  <option>Airbnb</option>
-                  <option>Booking.com</option>
-                  <option>Vrbo</option>
-                  <option>Direct</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Checkout Date</label>
-                <input type="date" name="checkoutDate" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Comment</label>
-                <textarea name="comment" class="form-textarea"></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
-          </form>
-        </div>
+        <div id="reviewsList" style="padding:1rem;"></div>
       </div>
     `;
     await loadReviewsDropdown();
@@ -1556,11 +1239,13 @@
     try {
       const snap = await db.collection('properties').get();
       const select = document.getElementById('reviewPropertySelect');
+      const editSelect = document.getElementById('editReviewPropertySelect');
       let html = '<option value="">Select Property...</option>';
       snap.forEach(doc => {
         html += `<option value="${doc.id}">${doc.data().propertyName}</option>`;
       });
       select.innerHTML = html;
+      editSelect.innerHTML = html;
     } catch (err) {
       console.error(err);
     }
@@ -1571,39 +1256,29 @@
       const snap = await db.collection('reviews').orderBy('createdAt','desc').get();
       const container = document.getElementById('reviewsList');
       if (snap.empty) {
-        container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--color-text-secondary);">No reviews yet</div>';
+        container.innerHTML = '<p>No reviews yet. Add your first review to get started.</p>';
         return;
       }
+      const propsSnap = await db.collection('properties').get();
+      const propsMap = {};
+      propsSnap.forEach(doc => propsMap[doc.id] = doc.data().propertyName);
       let html = '';
       snap.forEach(doc => {
         const d = doc.data();
-        const badge = d.rating <= 2 ? 'danger' : d.rating <= 4 ? 'warning' : 'success';
-        const checkoutStr = d.checkoutDate && d.checkoutDate.toDate
-          ? d.checkoutDate.toDate().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})
-          : 'N/A';
-
-        html += `
-          <div class="review-item" onclick="openEditReviewModal('${doc.id}')"
-               onmouseover="this.style.backgroundColor='rgba(37,99,235,0.07)'"
-               onmouseout="this.style.backgroundColor=''">
-            <div style="display:flex;justify-content:space-between;align-items:start; flex-wrap:wrap; gap:1rem; margin-bottom:0.8rem;">
-              <div style="flex:1;">
-                <strong style="font-size:1.1rem;">${d.guestName || 'Anonymous'}</strong>
-                <span class="badge badge-${badge}" style="margin-left:8px;">${d.rating}/5</span>
-              </div>
-              <div style="display:flex; gap:0.5rem;" onclick="event.stopPropagation();">
-                <button class="btn btn-secondary" onclick="openEditReviewModal('${doc.id}')">Edit</button>
-                <button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button>
-              </div>
-            </div>
-            <p style="margin:0.6rem 0 1rem; line-height:1.6; white-space:pre-wrap; word-break:break-word;">
-              ${d.comment ? d.comment.replace(/\n/g, '<br>') : '—'}
-            </p>
-            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:0.85rem;">
-              <span class="badge badge-primary">${d.platform || '?'}</span>
-              <span style="color:var(--color-text-secondary);">Checkout: ${checkoutStr}</span>
-            </div>
-          </div>`;
+        const rating = Number(d.rating) || 0;
+        const ratingColor = rating >= 4 ? '#10b981' : rating >= 3 ? '#f59e0b' : '#ef4444';
+        const propName = propsMap[d.propertyId] || 'Unknown Property';
+        html += `<div style="padding:1rem; border:1px solid var(--color-border); border-radius:6px; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:flex-start;">
+          <div style="flex:1;">
+            <strong>${d.guestName}</strong> - <span style="color:${ratingColor}; font-weight:600;">${rating}⭐</span><br>
+            <small style="color:var(--color-text-secondary);">${propName} • ${d.platform}</small><br>
+            <p style="margin-top:0.5rem; font-size:0.9rem;">${d.comment || '(No comment)'}</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-left:1rem;">
+            <button class="btn btn-edit" onclick="openEditReviewModal('${doc.id}')">Edit</button>
+            <button class="btn btn-danger" onclick="deleteReview('${doc.id}')">Delete</button>
+          </div>
+        </div>`;
       });
       container.innerHTML = html;
     } catch (err) {
@@ -1620,6 +1295,28 @@
     document.getElementById('reviewForm')?.reset();
   }
 
+  async function openEditReviewModal(id) {
+    try {
+      const doc = await db.collection('reviews').doc(id).get();
+      const d = doc.data();
+      const form = document.getElementById('editReviewForm');
+      form.querySelector('[name="reviewId"]').value = id;
+      form.querySelector('[name="propertyId"]').value = d.propertyId;
+      form.querySelector('[name="guestName"]').value = d.guestName;
+      form.querySelector('[name="rating"]').value = d.rating;
+      form.querySelector('[name="platform"]').value = d.platform;
+      form.querySelector('[name="comment"]').value = d.comment || '';
+      form.querySelector('[name="checkoutDate"]').value = d.checkoutDate.toDate().toISOString().split('T')[0];
+      document.getElementById('editReviewModal').classList.add('active');
+    } catch (err) {
+      alert('Error loading review');
+    }
+  }
+
+  function closeEditReviewModal() {
+    document.getElementById('editReviewModal').classList.remove('active');
+  }
+
   async function saveReview(e) {
     e.preventDefault();
     const form = e.target;
@@ -1628,15 +1325,10 @@
       alert('Please select a property');
       return;
     }
-    const checkoutDateStr = form.checkoutDate.value;
-    if (!checkoutDateStr) {
-      alert('Please select checkout date');
-      return;
-    }
     try {
       const rating = Number(form.rating.value);
-      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(checkoutDateStr));
-      const reviewMonth = checkoutDateStr.substring(0, 7);
+      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(form.checkoutDate.value));
+      const reviewMonth = form.checkoutDate.value.substring(0, 7);
 
       await db.collection('reviews').add({
         propertyId: propertyId,
@@ -1657,101 +1349,60 @@
       const newRating = ((oldRating * oldCount) + rating) / newCount;
       await db.collection('properties').doc(propertyId).update({
         totalReviews: newCount,
-        averageRating: Math.round(newRating * 10) / 10,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        averageRating: Math.round(newRating * 10) / 10
       });
 
       closeReviewModal();
       await renderReviewsPage(document.getElementById('mainContent'));
-      navigateTo('analytics');
     } catch (err) {
       alert("Error: " + err.message);
     }
   }
 
-  async function openEditReviewModal(id) {
-    try {
-      const reviewDoc = await db.collection('reviews').doc(id).get();
-      if (!reviewDoc.exists) return alert("Review not found");
-
-      const data = reviewDoc.data();
-
-      const form = document.getElementById('editReviewForm');
-      form.reviewId.value = id;
-      form.guestName.value = data.guestName || '';
-      form.rating.value = data.rating || '';
-      form.platform.value = data.platform || '';
-      form.comment.value = data.comment || '';
-
-      if (data.checkoutDate) {
-        const date = data.checkoutDate.toDate ? data.checkoutDate.toDate() : new Date(data.checkoutDate);
-        form.checkoutDate.value = date.toISOString().split('T')[0];
-      }
-
-      const snap = await db.collection('properties').get();
-      let html = '';
-      snap.forEach(doc => {
-        const selected = doc.id === data.propertyId ? 'selected' : '';
-        html += `<option value="${doc.id}" ${selected}>${doc.data().propertyName}</option>`;
-      });
-      document.getElementById('editReviewPropertySelect').innerHTML = html;
-
-      document.getElementById('editReviewModal').classList.add('active');
-    } catch (err) {
-      alert("Error loading review: " + err.message);
-    }
-  }
-
-  function closeEditReviewModal() {
-    document.getElementById('editReviewModal').classList.remove('active');
-    document.getElementById('editReviewForm')?.reset();
-  }
-
   async function updateReview(e) {
     e.preventDefault();
     const form = e.target;
-    const reviewId = form.reviewId.value;
-    const propertyId = form.propertyId.value;
-
+    const reviewId = form.querySelector('[name="reviewId"]').value;
+    const newRating = Number(form.querySelector('[name="rating"]').value);
+    
     try {
-      const rating = Number(form.rating.value);
-      const checkoutDateStr = form.checkoutDate.value;
-      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(checkoutDateStr));
-      const reviewMonth = checkoutDateStr.substring(0, 7);
+      const reviewDoc = await db.collection('reviews').doc(reviewId).get();
+      const oldReviewData = reviewDoc.data();
+      const oldRating = Number(oldReviewData.rating) || 0;
+      const propertyId = oldReviewData.propertyId;
 
       await db.collection('reviews').doc(reviewId).update({
-        propertyId,
-        guestName: form.guestName.value.trim(),
-        rating,
-        platform: form.platform.value,
-        comment: form.comment.value.trim(),
-        checkoutDate,
-        reviewMonth,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        propertyId: form.querySelector('[name="propertyId"]').value,
+        guestName: form.querySelector('[name="guestName"]').value.trim(),
+        rating: newRating,
+        platform: form.querySelector('[name="platform"]').value,
+        comment: form.querySelector('[name="comment"]').value.trim(),
+        checkoutDate: firebase.firestore.Timestamp.fromDate(new Date(form.querySelector('[name="checkoutDate"]').value))
       });
 
+      // Recalculate property rating
       const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
-      let totalRating = 0;
-      reviewsSnap.forEach(r => totalRating += Number(r.data().rating) || 0);
-      const count = reviewsSnap.size;
-      const avg = count > 0 ? Math.round((totalRating / count) * 10) / 10 : 0;
-
-      await db.collection('properties').doc(propertyId).update({
-        totalReviews: count,
-        averageRating: avg,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      if (reviewsSnap.empty) {
+        await db.collection('properties').doc(propertyId).update({ totalReviews: 0, averageRating: 0 });
+      } else {
+        let totalRating = 0;
+        reviewsSnap.forEach(doc => totalRating += Number(doc.data().rating) || 0);
+        const newAvgRating = Math.round((totalRating / reviewsSnap.size) * 10) / 10;
+        await db.collection('properties').doc(propertyId).update({
+          totalReviews: reviewsSnap.size,
+          averageRating: newAvgRating
+        });
+      }
 
       closeEditReviewModal();
       await renderReviewsPage(document.getElementById('mainContent'));
-      navigateTo('analytics');
     } catch (err) {
-      alert("Update failed: " + err.message);
+      alert("Error: " + err.message);
     }
   }
 
   async function deleteReview(id) {
-    if (!confirm("Delete review?")) return;
+    if (!confirm("Delete this review?")) return;
     try {
       const reviewDoc = await db.collection('reviews').doc(id).get();
       const reviewData = reviewDoc.data();
@@ -1774,80 +1425,19 @@
       }
       await renderReviewsPage(document.getElementById('mainContent'));
     } catch (err) {
-      alert("Delete failed");
+      alert("Error: " + err.message);
     }
   }
 
-  // ─────────────────────────────────────────────
-  // ACTION PLANS (unchanged - no row click added here)
-  // ─────────────────────────────────────────────
+  // ========== ACTION PLANS PAGE ==========
   async function renderActionsPage(container) {
     container.innerHTML = `
-      <div class="page-header"><h1 class="page-title">Action Plans</h1></div>
-      <button class="btn btn-primary" onclick="openActionModal()">+ Create Action</button>
-      <div class="card">
-        <div class="card-header"><h3 class="card-title">All Actions</h3></div>
-        <div class="table-container" style="overflow-x:auto;">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Issue</th>
-                <th>Impact</th>
-                <th>Assigned To</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="actionsTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:3rem;">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="page-header">
+        <h1 class="page-title">Action Plans</h1>
+        <button class="btn btn-primary" onclick="openActionModal()">+ Create Action</button>
       </div>
-
-      <div id="actionModal" class="modal-overlay">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">New Action Plan</h3>
-            <button class="modal-close" onclick="closeActionModal()">×</button>
-          </div>
-          <form id="actionForm" onsubmit="saveAction(event)">
-            <div class="modal-body">
-              <div class="form-group">
-                <label class="form-label">Property *</label>
-                <select id="actionPropertySelect" class="form-select" required>
-                  <option value="">Select Property...</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Issue Category</label>
-                <select name="issueCategory" class="form-select" required>
-                  <option value="">Select...</option>
-                  <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Impact Level</label>
-                <select name="impactLevel" class="form-select" required>
-                  <option>Low</option><option>Medium</option><option>High</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Assigned To</label>
-                <input type="text" name="assignedTo" class="form-input" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea name="actionDescription" class="form-textarea" required></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Create</button>
-            </div>
-          </form>
-        </div>
+      <div class="card">
+        <div id="actionsList" style="padding:1rem;"></div>
       </div>
     `;
     await loadActionsDropdown();
@@ -1858,18 +1448,20 @@
     try {
       const snap = await db.collection('properties').get();
       const select = document.getElementById('actionPropertySelect');
+      const editSelect = document.getElementById('editActionPropertySelect');
       let html = '<option value="">Select Property...</option>';
       snap.forEach(doc => html += `<option value="${doc.id}">${doc.data().propertyName}</option>`);
       select.innerHTML = html;
+      editSelect.innerHTML = html;
     } catch (err) { console.error(err); }
   }
 
   async function loadActions() {
     try {
       const snap = await db.collection('actionPlans').get();
-      const tbody = document.getElementById('actionsTableBody');
+      const container = document.getElementById('actionsList');
       if (snap.empty) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;">No actions yet</td></tr>';
+        container.innerHTML = '<p>No action plans yet. Create your first action to get started.</p>';
         return;
       }
       const propsSnap = await db.collection('properties').get();
@@ -1878,19 +1470,29 @@
       let html = '';
       snap.forEach(doc => {
         const d = doc.data();
-        const impactColor = d.impactLevel === 'High' ? 'danger' : 'warning';
         const propName = propsMap[d.propertyId] || 'Unknown';
+        const impactColor = d.impactLevel === 'High' ? '#ef4444' : d.impactLevel === 'Medium' ? '#f59e0b' : '#10b981';
+        const statusColor = d.status === 'Completed' ? '#10b981' : d.status === 'In Progress' ? '#f59e0b' : '#6b7280';
         html += `
-          <tr>
-            <td><strong>${propName}</strong></td>
-            <td><strong>${d.issueCategory || '?'}</strong></td>
-            <td><span class="badge badge-${impactColor}">${d.impactLevel}</span></td>
-            <td>${d.assignedTo || '—'}</td>
-            <td><span class="badge badge-primary">${d.status || 'Pending'}</span></td>
-            <td><button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button></td>
-          </tr>`;
+          <div class="action-item">
+            <div class="action-info">
+              <div class="action-title">${propName}</div>
+              <div style="font-size:0.9rem; color:var(--color-text-secondary); margin:0.5rem 0;">
+                <strong>${d.issueCategory}</strong> • Impact: <span style="color:${impactColor}; font-weight:600;">${d.impactLevel}</span>
+              </div>
+              <div class="action-desc">${d.actionDescription}</div>
+              <div style="font-size:0.85rem; color:var(--color-text-secondary); margin-top:0.5rem;">
+                Assigned: <strong>${d.assignedTo}</strong> • Status: <span style="color:${statusColor}; font-weight:600;">${d.status}</span>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-edit" onclick="openEditActionModal('${doc.id}')">Edit</button>
+              <button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button>
+            </div>
+          </div>
+        `;
       });
-      tbody.innerHTML = html;
+      container.innerHTML = html;
     } catch (err) { console.error(err); }
   }
 
@@ -1898,6 +1500,28 @@
   function closeActionModal() {
     document.getElementById('actionModal').classList.remove('active');
     document.getElementById('actionForm')?.reset();
+  }
+
+  async function openEditActionModal(id) {
+    try {
+      const doc = await db.collection('actionPlans').doc(id).get();
+      const d = doc.data();
+      const form = document.getElementById('editActionForm');
+      form.querySelector('[name="actionId"]').value = id;
+      form.querySelector('[name="propertyId"]').value = d.propertyId;
+      form.querySelector('[name="issueCategory"]').value = d.issueCategory;
+      form.querySelector('[name="impactLevel"]').value = d.impactLevel;
+      form.querySelector('[name="assignedTo"]').value = d.assignedTo;
+      form.querySelector('[name="actionDescription"]').value = d.actionDescription;
+      form.querySelector('[name="status"]').value = d.status;
+      document.getElementById('editActionModal').classList.add('active');
+    } catch (err) {
+      alert('Error loading action');
+    }
+  }
+
+  function closeEditActionModal() {
+    document.getElementById('editActionModal').classList.remove('active');
   }
 
   async function saveAction(e) {
@@ -1912,7 +1536,7 @@
         impactLevel: form.impactLevel.value,
         assignedTo: form.assignedTo.value.trim(),
         actionDescription: form.actionDescription.value.trim(),
-        status: 'Pending',
+        status: form.status.value,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       closeActionModal();
@@ -1922,87 +1546,65 @@
     }
   }
 
+  async function updateAction(e) {
+    e.preventDefault();
+    const form = e.target;
+    const actionId = form.querySelector('[name="actionId"]').value;
+    try {
+      await db.collection('actionPlans').doc(actionId).update({
+        propertyId: form.querySelector('[name="propertyId"]').value,
+        issueCategory: form.querySelector('[name="issueCategory"]').value,
+        impactLevel: form.querySelector('[name="impactLevel"]').value,
+        assignedTo: form.querySelector('[name="assignedTo"]').value.trim(),
+        actionDescription: form.querySelector('[name="actionDescription"]').value.trim(),
+        status: form.querySelector('[name="status"]').value
+      });
+      closeEditActionModal();
+      await renderActionsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
   async function deleteAction(id) {
-    if (!confirm("Delete action?")) return;
+    if (!confirm("Delete this action plan?")) return;
     try {
       await db.collection('actionPlans').doc(id).delete();
       await renderActionsPage(document.getElementById('mainContent'));
     } catch (err) {
-      alert("Delete failed");
+      alert("Error: " + err.message);
     }
   }
 
-  function applyDateFilter() {
-    dateFilterFrom = document.getElementById('dateFrom').value;
-    dateFilterTo = document.getElementById('dateTo').value;
-    if (dateFilterFrom && dateFilterTo) {
-      navigateTo('dashboard');
-    } else {
-      alert('Please select both dates');
-    }
-  }
+  // Initialize
+  loadTheme();
+  initializeFirebase();
 
-  function clearDateFilter() {
-    dateFilterFrom = null;
-    dateFilterTo = null;
-    document.getElementById('dateFrom').value = '';
-    document.getElementById('dateTo').value = '';
-    navigateTo('dashboard');
-  }
-
-  function filterProperties() {
-    const searchText = document.getElementById('propertySearch').value.toLowerCase();
-    const rows = document.querySelectorAll('#propertiesTableBody tr');
-    rows.forEach(row => {
-      const name = row.cells[0]?.textContent.toLowerCase() || '';
-      const location = row.cells[1]?.textContent.toLowerCase() || '';
-      row.style.display = (name.includes(searchText) || location.includes(searchText)) ? '' : 'none';
-    });
-  }
-
-  async function init() {
-    loadTheme();
-    const fbOk = initializeFirebase();
-    if (fbOk) {
-      navigateTo('dashboard');
-    } else {
-      document.getElementById('mainContent').innerHTML = `
-        <div style="text-align:center; padding:4rem; color:var(--color-danger);">
-          <h2>Firebase connection failed</h2>
-          <p>Please check your configuration.</p>
-        </div>`;
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-  // Expose functions to window
+  // Expose functions globally
   window.navigateTo = navigateTo;
   window.toggleTheme = toggleTheme;
-  window.applyDateFilter = applyDateFilter;
-  window.clearDateFilter = clearDateFilter;
-  window.filterProperties = filterProperties;
+  window.handleLogin = handleLogin;
+  window.handleLogout = handleLogout;
   window.openPropertyModal = openPropertyModal;
   window.closePropertyModal = closePropertyModal;
-  window.saveProperty = saveProperty;
   window.openEditPropertyModal = openEditPropertyModal;
   window.closeEditPropertyModal = closeEditPropertyModal;
+  window.saveProperty = saveProperty;
   window.updateProperty = updateProperty;
   window.deleteProperty = deleteProperty;
   window.openReviewModal = openReviewModal;
   window.closeReviewModal = closeReviewModal;
-  window.saveReview = saveReview;
   window.openEditReviewModal = openEditReviewModal;
   window.closeEditReviewModal = closeEditReviewModal;
+  window.saveReview = saveReview;
   window.updateReview = updateReview;
   window.deleteReview = deleteReview;
   window.openActionModal = openActionModal;
   window.closeActionModal = closeActionModal;
+  window.openEditActionModal = openEditActionModal;
+  window.closeEditActionModal = closeEditActionModal;
   window.saveAction = saveAction;
+  window.updateAction = updateAction;
   window.deleteAction = deleteAction;
 </script>
 </body>
