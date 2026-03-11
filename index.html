@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -35,6 +36,120 @@
       color: var(--color-text-primary);
       transition: all 0.2s;
     }
+
+    /* ── LOGIN SCREEN ── */
+    #loginScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .login-logo-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-logo-text { font-size: 1.3rem; font-weight: 700; color: #111827; }
+    .login-logo-sub { font-size: 0.8rem; color: #6b7280; }
+    .login-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 0.4rem;
+    }
+    .login-subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+    .login-form-group { margin-bottom: 1.25rem; }
+    .login-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+    .login-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #111827;
+      background: #f9fafb;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .login-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+      background: #fff;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    .login-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .login-btn:active { transform: translateY(0); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #dc2626;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .login-spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* ── DASHBOARD (hidden until logged in) ── */
+    #dashboardApp { display: none; }
+
     .app-container {
       display: grid;
       grid-template-columns: 260px 1fr;
@@ -94,6 +209,7 @@
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
     }
     .theme-toggle {
       background: var(--color-bg-secondary);
@@ -106,6 +222,22 @@
       cursor: pointer;
       font-size: 18px;
     }
+    .logout-btn {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #ef4444;
+      border-radius: 6px;
+      padding: 0 0.75rem;
+      height: 40px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover { background: rgba(239,68,68,0.18); }
     .main-content {
       padding: 1.5rem 2rem;
       overflow-y: auto;
@@ -294,341 +426,73 @@
 </head>
 <body>
 
-<div class="app-container">
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">GR</div>
-      <div>
-        <div style="font-weight:600;">Guest Reviews</div>
-        <div style="font-size:0.78rem; opacity:0.7;">Dashboard</div>
+  <!-- ═══════════════════════════════════════════════
+       LOGIN SCREEN
+  ════════════════════════════════════════════════ -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon">GR</div>
+        <div>
+          <div class="login-logo-text">Guest Reviews</div>
+          <div class="login-logo-sub">Dashboard</div>
+        </div>
       </div>
-    </div>
-    <nav class="sidebar-nav">
-      <button class="nav-item active" onclick="navigateTo('dashboard')">Dashboard</button>
-      <button class="nav-item" onclick="navigateTo('analytics')">Property Analytics</button>
-      <button class="nav-item" onclick="navigateTo('properties')">Properties</button>
-      <button class="nav-item" onclick="navigateTo('reviews')">Reviews</button>
-      <button class="nav-item" onclick="navigateTo('actions')">Action Plans</button>
-    </nav>
-    <div class="sidebar-footer">
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
-      <div style="font-size:0.82rem; opacity:0.8;">
-        <div id="statusIndicator">Initializing...</div>
-        <div id="firebaseStatus" style="color:var(--color-success);">Connecting...</div>
-      </div>
-    </div>
-  </aside>
+      <h2 class="login-title">Admin Login</h2>
+      <p class="login-subtitle">Sign in to access the dashboard</p>
 
-  <main class="main-content" id="mainContent">
-    <div class="loading">
-      <div class="spinner"></div>
-      <span>Loading dashboard...</span>
-    </div>
-  </main>
-</div>
+      <div id="loginError" class="login-error"></div>
 
-<!-- Property Modals -->
-<div id="propertyModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Add New Property</h3>
-      <button class="modal-close" onclick="closePropertyModal()">×</button>
+      <div class="login-form-group">
+        <label class="login-label" for="loginEmail">Email Address</label>
+        <input type="email" id="loginEmail" class="login-input" placeholder="admin@example.com" autocomplete="username">
+      </div>
+      <div class="login-form-group">
+        <label class="login-label" for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" class="login-input" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
     </div>
-    <form id="propertyForm" onsubmit="saveProperty(event)">
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Property Name</label>
-          <input type="text" name="propertyName" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Location</label>
-          <input type="text" name="location" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">City</label>
-          <input type="text" name="city" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Unit Type</label>
-          <select name="unitType" class="form-select" required>
-            <option value="">Select...</option>
-            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Platform</label>
-          <select name="platform" class="form-select" required>
-            <option value="">Select...</option>
-            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Owner</label>
-          <input type="text" name="owner" class="form-input" required>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Property</button>
-      </div>
-    </form>
   </div>
-</div>
 
-<div id="editPropertyModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Edit Property</h3>
-      <button class="modal-close" onclick="closeEditPropertyModal()">×</button>
-    </div>
-    <form id="editPropertyForm" onsubmit="updateProperty(event)">
-      <div class="modal-body">
-        <input type="hidden" name="propertyId">
-        <div class="form-group">
-          <label class="form-label">Property Name</label>
-          <input type="text" name="propertyName" class="form-input" required>
+  <!-- ═══════════════════════════════════════════════
+       DASHBOARD APP (hidden until authenticated)
+  ════════════════════════════════════════════════ -->
+  <div id="dashboardApp">
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-icon">GR</div>
+          <div>
+            <div style="font-weight:600;">Guest Reviews</div>
+            <div style="font-size:0.78rem; opacity:0.7;">Dashboard</div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Location</label>
-          <input type="text" name="location" class="form-input" required>
+        <nav class="sidebar-nav">
+          <button class="nav-item active" onclick="navigateTo('dashboard')">Dashboard</button>
+          <button class="nav-item" onclick="navigateTo('analytics')">Property Analytics</button>
+          <button class="nav-item" onclick="navigateTo('properties')">Properties</button>
+          <button class="nav-item" onclick="navigateTo('reviews')">Reviews</button>
+          <button class="nav-item" onclick="navigateTo('actions')">Action Plans</button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+          <div style="font-size:0.82rem; opacity:0.8; flex:1;">
+            <div id="statusIndicator">Initializing...</div>
+            <div id="firebaseStatus" style="color:var(--color-success);">Connecting...</div>
+          </div>
+          <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻ Logout</button>
         </div>
-        <div class="form-group">
-          <label class="form-label">City</label>
-          <input type="text" name="city" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Unit Type</label>
-          <select name="unitType" class="form-select" required>
-            <option value="">Select...</option>
-            <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option><option>4BR</option><option>Villa</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Platform</label>
-          <select name="platform" class="form-select" required>
-            <option value="">Select...</option>
-            <option>All Platforms</option><option>Airbnb</option><option>Booking.com</option><option>Vrbo</option><option>Direct</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Owner</label>
-          <input type="text" name="owner" class="form-input" required>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditPropertyModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-      </div>
-    </form>
-  </div>
-</div>
+      </aside>
 
-<!-- Review Modals -->
-<div id="reviewModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Add Review</h3>
-      <button class="modal-close" onclick="closeReviewModal()">×</button>
+      <main class="main-content" id="mainContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Loading dashboard...</span>
+        </div>
+      </main>
     </div>
-    <form id="reviewForm" onsubmit="saveReview(event)">
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Property *</label>
-          <select id="reviewPropertySelect" class="form-select" required>
-            <option value="">Select Property...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Guest Name</label>
-          <input type="text" name="guestName" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Rating</label>
-          <select name="rating" class="form-select" required>
-            <option value="">Select...</option>
-            <option value="1">1 - Poor</option>
-            <option value="2">2 - Fair</option>
-            <option value="3">3 - Good</option>
-            <option value="4">4 - Very Good</option>
-            <option value="5">5 - Excellent</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Platform</label>
-          <select name="platform" class="form-select" required>
-            <option value="">Select...</option>
-            <option>Airbnb</option>
-            <option>Booking.com</option>
-            <option>Vrbo</option>
-            <option>Direct</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Checkout Date *</label>
-          <input type="date" name="checkoutDate" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Comment</label>
-          <textarea name="comment" class="form-textarea" placeholder="Guest feedback..."></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </div>
-    </form>
   </div>
-</div>
-
-<div id="editReviewModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Edit Review</h3>
-      <button class="modal-close" onclick="closeEditReviewModal()">×</button>
-    </div>
-    <form id="editReviewForm" onsubmit="updateReview(event)">
-      <div class="modal-body">
-        <input type="hidden" name="reviewId">
-        <div class="form-group">
-          <label class="form-label">Property *</label>
-          <select id="editReviewPropertySelect" name="propertyId" class="form-select" required></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Guest Name</label>
-          <input type="text" name="guestName" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Rating</label>
-          <select name="rating" class="form-select" required>
-            <option value="1">1 - Poor</option>
-            <option value="2">2 - Fair</option>
-            <option value="3">3 - Good</option>
-            <option value="4">4 - Very Good</option>
-            <option value="5">5 - Excellent</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Platform</label>
-          <select name="platform" class="form-select" required>
-            <option>Airbnb</option>
-            <option>Booking.com</option>
-            <option>Vrbo</option>
-            <option>Direct</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Checkout Date</label>
-          <input type="date" name="checkoutDate" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Comment</label>
-          <textarea name="comment" class="form-textarea"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditReviewModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Action Plans Modals -->
-<div id="actionModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">New Action Plan</h3>
-      <button class="modal-close" onclick="closeActionModal()">×</button>
-    </div>
-    <form id="actionForm" onsubmit="saveAction(event)">
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Property *</label>
-          <select id="actionPropertySelect" class="form-select" required>
-            <option value="">Select Property...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Issue Category</label>
-          <select name="issueCategory" class="form-select" required>
-            <option value="">Select...</option>
-            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Impact Level</label>
-          <select name="impactLevel" class="form-select" required>
-            <option>Low</option><option>Medium</option><option>High</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Assigned To</label>
-          <input type="text" name="assignedTo" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea name="actionDescription" class="form-textarea" required></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Create</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div id="editActionModal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Edit Action Plan</h3>
-      <button class="modal-close" onclick="closeEditActionModal()">×</button>
-    </div>
-    <form id="editActionForm" onsubmit="updateAction(event)">
-      <div class="modal-body">
-        <input type="hidden" name="actionId">
-        <div class="form-group">
-          <label class="form-label">Property *</label>
-          <select id="editActionPropertySelect" name="propertyId" class="form-select" required>
-            <option value="">Select Property...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Issue Category</label>
-          <select name="issueCategory" class="form-select" required>
-            <option value="">Select...</option>
-            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Impact Level</label>
-          <select name="impactLevel" class="form-select" required>
-            <option>Low</option><option>Medium</option><option>High</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Assigned To</label>
-          <input type="text" name="assignedTo" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select name="status" class="form-select" required>
-            <option value="Pending">Pending</option>
-            <option value="Done">Done</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea name="actionDescription" class="form-textarea" required></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditActionModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <script>
   const firebaseConfig = {
@@ -640,7 +504,10 @@
     appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
   };
 
+  const ADMIN_EMAIL = "chakusaprince@gmail.com";
+
   let db;
+  let auth;
   let currentPage = 'dashboard';
   let dateFilterFrom = null;
   let dateFilterTo = null;
@@ -650,7 +517,20 @@
     try {
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
+      auth = firebase.auth();
       updateStatus('Connected', 'success');
+
+      auth.onAuthStateChanged(function(user) {
+        if (user && user.email === ADMIN_EMAIL) {
+          showDashboard();
+        } else if (user) {
+          auth.signOut();
+          showLoginError("Access denied. You are not authorized to access this dashboard.");
+        } else {
+          showLogin();
+        }
+      });
+
       return true;
     } catch (err) {
       console.error("Firebase init failed", err);
@@ -658,6 +538,79 @@
       return false;
     }
   }
+
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboardApp').style.display = 'none';
+  }
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboardApp').style.display = 'block';
+    navigateTo('dashboard');
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideLoginError() {
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+
+    hideLoginError();
+
+    if (!email || !password) {
+      showLoginError("Please enter your email and password.");
+      return;
+    }
+
+    if (email !== ADMIN_EMAIL) {
+      showLoginError("Access denied. This account is not authorized.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="login-spinner"></span>Signing in...';
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (err) {
+      let msg = "Login failed. Please check your credentials.";
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        msg = "Invalid email or password. Please try again.";
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = "Too many failed attempts. Please try again later.";
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = "Network error. Please check your connection.";
+      }
+      showLoginError(msg);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Sign In';
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await auth.signOut();
+    } catch (err) {
+      console.error("Logout error", err);
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+      handleLogin();
+    }
+  });
 
   function updateStatus(msg, type = 'info') {
     document.getElementById('statusIndicator').textContent = msg;
@@ -2124,16 +2077,7 @@
 
   async function init() {
     loadTheme();
-    const fbOk = initializeFirebase();
-    if (fbOk) {
-      navigateTo('dashboard');
-    } else {
-      document.getElementById('mainContent').innerHTML = `
-        <div style="text-align:center; padding:4rem; color:var(--color-danger);">
-          <h2>Firebase connection failed</h2>
-          <p>Please check your configuration.</p>
-        </div>`;
-    }
+    initializeFirebase();
   }
 
   if (document.readyState === 'loading') {
@@ -2145,6 +2089,8 @@
   // Expose functions to window
   window.navigateTo = navigateTo;
   window.toggleTheme = toggleTheme;
+  window.handleLogin = handleLogin;
+  window.handleLogout = handleLogout;
   window.applyDateFilter = applyDateFilter;
   window.clearDateFilter = clearDateFilter;
   window.filterProperties = filterProperties;
