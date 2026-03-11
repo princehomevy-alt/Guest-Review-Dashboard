@@ -35,65 +35,10 @@
       color: var(--color-text-primary);
       transition: all 0.2s;
     }
-    .login-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 1rem;
-    }
-    .login-box {
-      background: var(--color-bg);
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    .login-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .login-logo {
-      width: 70px;
-      height: 70px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--color-primary), #0891b2);
-      color: white;
-      font-weight: bold;
-      font-size: 1.8rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1rem;
-    }
-    .login-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-    }
-    .login-subtitle {
-      color: var(--color-text-secondary);
-      font-size: 0.95rem;
-    }
-    .login-error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid var(--color-danger);
-      color: var(--color-danger);
-      padding: 0.9rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
-      display: none;
-    }
     .app-container {
-      display: none;
+      display: grid;
       grid-template-columns: 260px 1fr;
       min-height: 100vh;
-    }
-    .app-container.active {
-      display: grid;
     }
     .sidebar {
       background: var(--color-bg-secondary);
@@ -161,20 +106,6 @@
       cursor: pointer;
       font-size: 18px;
     }
-    .logout-btn {
-      background: var(--color-danger);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1rem;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .logout-btn:hover {
-      background: #dc2626;
-    }
     .main-content {
       padding: 1.5rem 2rem;
       overflow-y: auto;
@@ -231,12 +162,6 @@
     .btn-primary:hover { background: var(--color-primary-dark); }
     .btn-secondary { background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
     .btn-danger { background: var(--color-danger); color: white; }
-    .btn-login {
-      width: 100%;
-      padding: 0.9rem;
-      font-size: 15px;
-      font-weight: 600;
-    }
     .table { width:100%; border-collapse: collapse; font-size: 14px; }
     .table thead {
       background: var(--color-bg-secondary);
@@ -369,31 +294,7 @@
 </head>
 <body>
 
-<div id="loginScreen" class="login-container">
-  <div class="login-box">
-    <div class="login-header">
-      <div class="login-logo">GR</div>
-      <h1 class="login-title">Guest Review Dashboard</h1>
-      <p class="login-subtitle">Sign in to access your dashboard</p>
-    </div>
-
-    <div id="loginError" class="login-error"></div>
-
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="form-group">
-        <label class="form-label">Email Address</label>
-        <input type="email" id="loginEmail" class="form-input" placeholder="Enter your email" required autofocus>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
-      </div>
-      <button type="submit" class="btn btn-primary btn-login">Sign In</button>
-    </form>
-  </div>
-</div>
-
-<div class="app-container" id="appContainer">
+<div class="app-container">
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">GR</div>
@@ -411,11 +312,10 @@
     </nav>
     <div class="sidebar-footer">
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
-      <div style="flex:1; font-size:0.82rem; opacity:0.8;">
+      <div style="font-size:0.82rem; opacity:0.8;">
         <div id="statusIndicator">Initializing...</div>
         <div id="firebaseStatus" style="color:var(--color-success);">Connecting...</div>
       </div>
-      <button class="logout-btn" onclick="handleLogout()" title="Logout">Logout</button>
     </div>
   </aside>
 
@@ -633,7 +533,7 @@
   </div>
 </div>
 
-<!-- Action Plans Modal -->
+<!-- Action Plans Modals -->
 <div id="actionModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -678,12 +578,59 @@
   </div>
 </div>
 
-<script>
-  const VALID_CREDENTIALS = {
-    email: 'chakusaprince@gmail.com',
-    password: 'Youngchriss1995@'
-  };
+<div id="editActionModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Action Plan</h3>
+      <button class="modal-close" onclick="closeEditActionModal()">×</button>
+    </div>
+    <form id="editActionForm" onsubmit="updateAction(event)">
+      <div class="modal-body">
+        <input type="hidden" name="actionId">
+        <div class="form-group">
+          <label class="form-label">Property *</label>
+          <select id="editActionPropertySelect" name="propertyId" class="form-select" required>
+            <option value="">Select Property...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Category</label>
+          <select name="issueCategory" class="form-select" required>
+            <option value="">Select...</option>
+            <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impact Level</label>
+          <select name="impactLevel" class="form-select" required>
+            <option>Low</option><option>Medium</option><option>High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned To</label>
+          <input type="text" name="assignedTo" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select" required>
+            <option value="Pending">Pending</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="actionDescription" class="form-textarea" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditActionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
 
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
     authDomain: "guestreviewdashboard.firebaseapp.com",
@@ -698,54 +645,6 @@
   let dateFilterFrom = null;
   let dateFilterTo = null;
   let chartInstances = {};
-
-  function handleLogin(event) {
-    event.preventDefault();
-
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errorEl = document.getElementById('loginError');
-
-    if (email === VALID_CREDENTIALS.email && password === VALID_CREDENTIALS.password) {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', email);
-      showDashboard();
-    } else {
-      errorEl.textContent = 'Invalid email or password. Please try again.';
-      errorEl.style.display = 'block';
-      document.getElementById('loginPassword').value = '';
-    }
-  }
-
-  function handleLogout() {
-    if (confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userEmail');
-      showLogin();
-    }
-  }
-
-  function showLogin() {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('appContainer').classList.remove('active');
-    document.getElementById('loginForm').reset();
-    document.getElementById('loginError').style.display = 'none';
-  }
-
-  function showDashboard() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appContainer').classList.add('active');
-    navigateTo('dashboard');
-  }
-
-  function checkAuth() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (isLoggedIn) {
-      showDashboard();
-    } else {
-      showLogin();
-    }
-  }
 
   function initializeFirebase() {
     try {
@@ -1928,7 +1827,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // ACTION PLANS
+  // ACTION PLANS WITH EDIT FUNCTIONALITY
   // ─────────────────────────────────────────────
   async function renderActionsPage(container) {
     container.innerHTML = `
@@ -1998,6 +1897,58 @@
           </form>
         </div>
       </div>
+
+      <div id="editActionModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit Action Plan</h3>
+            <button class="modal-close" onclick="closeEditActionModal()">×</button>
+          </div>
+          <form id="editActionForm" onsubmit="updateAction(event)">
+            <div class="modal-body">
+              <input type="hidden" name="actionId">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="editActionPropertySelect" name="propertyId" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Issue Category</label>
+                <select name="issueCategory" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Cleaning</option><option>Maintenance</option><option>Communication</option><option>Check-in</option><option>Noise</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Impact Level</label>
+                <select name="impactLevel" class="form-select" required>
+                  <option>Low</option><option>Medium</option><option>High</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Assigned To</label>
+                <input type="text" name="assignedTo" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select" required>
+                  <option value="Pending">Pending</option>
+                  <option value="Done">Done</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="actionDescription" class="form-textarea" required></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeEditActionModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
     `;
     await loadActionsDropdown();
     await loadActions();
@@ -2028,6 +1979,7 @@
       snap.forEach(doc => {
         const d = doc.data();
         const impactColor = d.impactLevel === 'High' ? 'danger' : 'warning';
+        const statusColor = d.status === 'Done' ? 'success' : 'primary';
         const propName = propsMap[d.propertyId] || 'Unknown';
         html += `
           <tr>
@@ -2035,8 +1987,11 @@
             <td><strong>${d.issueCategory || '?'}</strong></td>
             <td><span class="badge badge-${impactColor}">${d.impactLevel}</span></td>
             <td>${d.assignedTo || '—'}</td>
-            <td><span class="badge badge-primary">${d.status || 'Pending'}</span></td>
-            <td><button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button></td>
+            <td><span class="badge badge-${statusColor}">${d.status || 'Pending'}</span></td>
+            <td>
+              <button class="btn btn-secondary" onclick="openEditActionModal('${doc.id}')">Edit</button>
+              <button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button>
+            </td>
           </tr>`;
       });
       tbody.innerHTML = html;
@@ -2044,6 +1999,7 @@
   }
 
   function openActionModal() { document.getElementById('actionModal').classList.add('active'); }
+
   function closeActionModal() {
     document.getElementById('actionModal').classList.remove('active');
     document.getElementById('actionForm')?.reset();
@@ -2068,6 +2024,63 @@
       await renderActionsPage(document.getElementById('mainContent'));
     } catch (err) {
       alert("Error: " + err.message);
+    }
+  }
+
+  async function openEditActionModal(id) {
+    try {
+      const actionDoc = await db.collection('actionPlans').doc(id).get();
+      if (!actionDoc.exists) return alert("Action plan not found");
+
+      const data = actionDoc.data();
+      const form = document.getElementById('editActionForm');
+      form.actionId.value = id;
+      form.assignedTo.value = data.assignedTo || '';
+      form.issueCategory.value = data.issueCategory || '';
+      form.impactLevel.value = data.impactLevel || '';
+      form.status.value = data.status || 'Pending';
+      form.actionDescription.value = data.actionDescription || '';
+
+      const snap = await db.collection('properties').get();
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => {
+        const selected = doc.id === data.propertyId ? 'selected' : '';
+        html += `<option value="${doc.id}" ${selected}>${doc.data().propertyName}</option>`;
+      });
+      document.getElementById('editActionPropertySelect').innerHTML = html;
+
+      document.getElementById('editActionModal').classList.add('active');
+    } catch (err) {
+      alert("Error loading action plan: " + err.message);
+    }
+  }
+
+  function closeEditActionModal() {
+    document.getElementById('editActionModal').classList.remove('active');
+    document.getElementById('editActionForm')?.reset();
+  }
+
+  async function updateAction(e) {
+    e.preventDefault();
+    const form = e.target;
+    const actionId = form.actionId.value;
+    const propertyId = form.propertyId.value;
+
+    try {
+      await db.collection('actionPlans').doc(actionId).update({
+        propertyId: propertyId,
+        issueCategory: form.issueCategory.value,
+        impactLevel: form.impactLevel.value,
+        assignedTo: form.assignedTo.value.trim(),
+        status: form.status.value,
+        actionDescription: form.actionDescription.value.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      closeEditActionModal();
+      await renderActionsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Update failed: " + err.message);
     }
   }
 
@@ -2113,7 +2126,7 @@
     loadTheme();
     const fbOk = initializeFirebase();
     if (fbOk) {
-      checkAuth();
+      navigateTo('dashboard');
     } else {
       document.getElementById('mainContent').innerHTML = `
         <div style="text-align:center; padding:4rem; color:var(--color-danger);">
@@ -2129,6 +2142,7 @@
     init();
   }
 
+  // Expose functions to window
   window.navigateTo = navigateTo;
   window.toggleTheme = toggleTheme;
   window.applyDateFilter = applyDateFilter;
@@ -2151,9 +2165,10 @@
   window.openActionModal = openActionModal;
   window.closeActionModal = closeActionModal;
   window.saveAction = saveAction;
+  window.openEditActionModal = openEditActionModal;
+  window.closeEditActionModal = closeEditActionModal;
+  window.updateAction = updateAction;
   window.deleteAction = deleteAction;
-  window.handleLogin = handleLogin;
-  window.handleLogout = handleLogout;
 </script>
 </body>
 </html>
