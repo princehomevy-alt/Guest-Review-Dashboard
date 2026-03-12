@@ -2291,7 +2291,7 @@
     }
   }
 
-  // ✅ HOSTAWAY CSV MAPPING FUNCTION
+  // ✅ UPDATED HOSTAWAY CSV MAPPING FUNCTION
   function handleImportFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -2309,45 +2309,53 @@
           return;
         }
 
-        // ✅ HOSTAWAY CSV MAPPING - FILTER FOR PUBLISHED REVIEWS
+        // ✅ IMPROVED HOSTAWAY CSV MAPPING
         importData = rawData.filter(row => {
-          // Only include rows with BOTH Rating AND Overall review (published reviews only)
-          return (row['Rating'] && row['Rating'] !== '') && 
-                 (row['Overall review'] && row['Overall review'] !== '');
+          // Rule: To be counted, a review MUST have a rating.
+          // Hostaway exports often have metadata rows or empty rows at the bottom; we skip those.
+          return (row['Rating'] !== undefined && row['Rating'] !== null && row['Rating'] !== '');
         }).map(row => {
-          // Convert Hostaway 1-10 scale to 1-5
-          const rating = row['Rating'] ? Number(row['Rating']) : 0;
-          const normalizedRating = rating > 5 ? Math.round((rating / 10) * 5 * 2) / 2 : rating;
-          
-          // Parse checkout date from "2025-11-01 11:00:00" format
-          let checkoutDate = row['Check-out'] || '';
-          if (checkoutDate) {
-            try {
-              const datePart = checkoutDate.split(' ')[0];
-              checkoutDate = datePart;
-            } catch (e) {
-              checkoutDate = '';
-            }
+          // Normalize Rating: Convert Hostaway 1-10 scale to 1-5 scale
+          const rawRating = Number(row['Rating']) || 0;
+          let normalizedRating = rawRating;
+          if (rawRating > 5) {
+            normalizedRating = Math.round((rawRating / 10) * 5 * 2) / 2;
           }
           
+          // Clean Checkout Date: Convert "2025-11-01 11:00:00" to "2025-11-01"
+          let rawCheckout = row['Check-out'] || row['Checkout'] || '';
+          let cleanCheckout = '';
+          if (rawCheckout) {
+            try {
+              // Try split by space if it has time component
+              cleanCheckout = String(rawCheckout).split(' ')[0];
+            } catch (e) {
+              cleanCheckout = rawCheckout;
+            }
+          }
+
+          // Header variations for comment/public review
+          const comment = row['Overall review'] || row['Public review'] || row['Review Content'] || '';
+          
           return {
-            guest_name: row['Guest name'] || 'Anonymous',
-            listing_name: row['Listing Name'] || 'Unknown',
-            channel: row['Channel'] ? row['Channel'].toLowerCase() : 'Direct',
-            checkout_date: checkoutDate,
+            guest_name: row['Guest name'] || row['Guest Name'] || 'Anonymous',
+            listing_name: row['Listing Name'] || row['Listing name'] || 'Unknown',
+            channel: row['Channel'] || row['Platform'] || 'Direct',
+            checkout_date: cleanCheckout,
             rating: normalizedRating,
-            review_comment: row['Overall review'] || ''
+            review_comment: comment
           };
         });
 
         if (importData.length === 0) {
-          alert('No published reviews found in file');
+          alert('No valid reviews found in file. Please check column headers (e.g., "Rating", "Listing Name")');
           return;
         }
 
         document.getElementById('importStep1NextBtn').disabled = false;
-        alert(`✓ Loaded ${importData.length} reviews from Hostaway`);
+        alert(`✓ Identified ${importData.length} Hostaway reviews`);
       } catch (err) {
+        console.error('Import Error:', err);
         alert('Error reading file: ' + err.message);
       }
     };
@@ -2403,7 +2411,7 @@
           progressText.textContent = '✓ Processing complete!';
           document.getElementById('importStep2NextBtn').disabled = false;
         }
-      }, idx * 100);
+      }, idx * 20); // Faster processing for large Hostaway files
     });
   }
 
@@ -2476,6 +2484,8 @@
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
           propertyId = newPropRef.id;
+          // Add to local map to avoid double creation for same import
+          window.importPropertiesMap[review.listingName] = propertyId;
         }
 
         // Add review
@@ -2611,3 +2621,4 @@
 </script>
 </body>
 </html>
+```
