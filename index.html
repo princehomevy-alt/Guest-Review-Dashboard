@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     :root {
@@ -147,7 +148,7 @@
       margin-right: 6px;
     }
 
-    /* ── DASHBOARD (hidden until logged in) ── */
+    /* ── DASHBOARD ── */
     #dashboardApp { display: none; }
 
     .app-container {
@@ -415,6 +416,87 @@
       background: rgba(37,99,235,0.07);
       transform: translateY(-1px);
     }
+
+    /* IMPORT STYLES */
+    .step-indicator {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: space-between;
+    }
+    .step {
+      flex: 1;
+      text-align: center;
+      padding: 1rem;
+      border-radius: 8px;
+      background: var(--color-bg-secondary);
+      cursor: pointer;
+    }
+    .step.active {
+      background: var(--color-primary);
+      color: white;
+    }
+    .step-number {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 0.25rem;
+    }
+    .step-title {
+      font-size: 0.9rem;
+    }
+    .import-step {
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    .import-step.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .upload-area {
+      border: 2px dashed var(--color-border);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-area:hover {
+      border-color: var(--color-primary);
+      background: rgba(37,99,235,0.05);
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--color-bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .import-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 1rem 0;
+    }
+    .import-table th {
+      background: var(--color-bg-secondary);
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--color-border);
+    }
+    .import-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .import-table tbody tr:hover {
+      background: rgba(37,99,235,0.05);
+    }
+
     @media (max-width: 992px) {
       .app-container { grid-template-columns: 1fr; }
       .sidebar { position: fixed; z-index: 900; transform: translateX(-100%); transition: transform 0.3s; }
@@ -426,9 +508,7 @@
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════════════
-       LOGIN SCREEN
-  ════════════════════════════════════════════════ -->
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen">
     <div class="login-card">
       <div class="login-logo">
@@ -455,9 +535,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       DASHBOARD APP (hidden until authenticated)
-  ════════════════════════════════════════════════ -->
+  <!-- DASHBOARD APP -->
   <div id="dashboardApp">
     <div class="app-container">
       <aside class="sidebar">
@@ -474,6 +552,7 @@
           <button class="nav-item" onclick="navigateTo('properties')">Properties</button>
           <button class="nav-item" onclick="navigateTo('reviews')">Reviews</button>
           <button class="nav-item" onclick="navigateTo('actions')">Action Plans</button>
+          <button class="nav-item" onclick="navigateTo('import')">📥 Import Reviews</button>
         </nav>
         <div class="sidebar-footer">
           <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
@@ -512,6 +591,10 @@
   let dateFilterFrom = null;
   let dateFilterTo = null;
   let chartInstances = {};
+
+  // IMPORT STATE
+  let importData = [];
+  let processedReviews = [];
 
   function initializeFirebase() {
     try {
@@ -648,10 +731,11 @@
     else if (page === 'properties') renderPropertiesPage(content);
     else if (page === 'reviews') renderReviewsPage(content);
     else if (page === 'actions') renderActionsPage(content);
+    else if (page === 'import') renderImportPage(content);
   }
 
   // ─────────────────────────────────────────────
-  // DASHBOARD
+  // DASHBOARD (unchanged)
   // ─────────────────────────────────────────────
   async function renderDashboard(container) {
     container.innerHTML = `
@@ -969,7 +1053,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // ANALYTICS PAGE
+  // ANALYTICS PAGE (unchanged)
   // ─────────────────────────────────────────────
   async function renderAnalyticsPage(container) {
     container.innerHTML = `
@@ -1176,7 +1260,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // PROPERTIES PAGE + CLICKABLE ROWS
+  // PROPERTIES PAGE (unchanged)
   // ─────────────────────────────────────────────
   async function renderPropertiesPage(container) {
     container.innerHTML = `
@@ -1429,14 +1513,14 @@
   }
 
   // ─────────────────────────────────────────────
-  // REVIEWS PAGE + CLICKABLE REVIEWS
+  // REVIEWS PAGE - ENHANCED WITH PROPERTY NAME
   // ─────────────────────────────────────────────
   async function renderReviewsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Reviews</h1></div>
       <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
       <div class="card">
-        <div class="card-header"><h3 class="card-title">Recent Reviews</h3></div>
+        <div class="card-header"><h3 class="card-title">All Reviews</h3></div>
         <div id="reviewsList" style="padding:1rem 0;"></div>
       </div>
 
@@ -1575,6 +1659,12 @@
         container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--color-text-secondary);">No reviews yet</div>';
         return;
       }
+
+      // Load properties for name mapping
+      const propsSnap = await db.collection('properties').get();
+      const propsMap = {};
+      propsSnap.forEach(doc => propsMap[doc.id] = doc.data().propertyName);
+
       let html = '';
       snap.forEach(doc => {
         const d = doc.data();
@@ -1582,6 +1672,7 @@
         const checkoutStr = d.checkoutDate && d.checkoutDate.toDate
           ? d.checkoutDate.toDate().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})
           : 'N/A';
+        const propertyName = propsMap[d.propertyId] || 'Unknown Property';
 
         html += `
           <div class="review-item" onclick="openEditReviewModal('${doc.id}')"
@@ -1591,6 +1682,7 @@
               <div style="flex:1;">
                 <strong style="font-size:1.1rem;">${d.guestName || 'Anonymous'}</strong>
                 <span class="badge badge-${badge}" style="margin-left:8px;">${d.rating}/5</span>
+                <div style="font-size:0.85rem; color:var(--color-text-secondary); margin-top:0.25rem;"><strong>Property:</strong> ${propertyName}</div>
               </div>
               <div style="display:flex; gap:0.5rem;" onclick="event.stopPropagation();">
                 <button class="btn btn-secondary" onclick="openEditReviewModal('${doc.id}')">Edit</button>
@@ -1780,7 +1872,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // ACTION PLANS WITH EDIT FUNCTIONALITY
+  // ACTION PLANS PAGE (unchanged)
   // ─────────────────────────────────────────────
   async function renderActionsPage(container) {
     container.innerHTML = `
@@ -2047,6 +2139,349 @@
     }
   }
 
+  // ─────────────────────────────────────────────
+  // IMPORT REVIEWS PAGE (NEW)
+  // ─────────────────────────────────────────────
+  function renderImportPage(container) {
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">📥 Import Reviews</h1>
+      </div>
+
+      <div class="step-indicator">
+        <div class="step active" onclick="goToImportStep(1)">
+          <div class="step-number">1</div>
+          <div class="step-title">Upload</div>
+        </div>
+        <div class="step" onclick="goToImportStep(2)">
+          <div class="step-number">2</div>
+          <div class="step-title">Process</div>
+        </div>
+        <div class="step" onclick="goToImportStep(3)">
+          <div class="step-number">3</div>
+          <div class="step-title">Review Data</div>
+        </div>
+        <div class="step" onclick="goToImportStep(4)">
+          <div class="step-number">4</div>
+          <div class="step-title">Confirm</div>
+        </div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div id="importStep1" class="import-step active">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 1: Upload Excel File</h3>
+          <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p style="font-size: 2rem; margin-bottom: 0.5rem;">📁</p>
+            <p style="font-weight: 600; margin-bottom: 0.5rem;">Click to upload Excel file</p>
+            <p style="font-size: 0.9rem; color: var(--color-text-secondary);">(.xlsx, .xls, .csv)</p>
+          </div>
+          <input type="file" id="fileInput" hidden accept=".xlsx,.xls,.csv" onchange="handleImportFileUpload(event)">
+          <div style="margin-top: 1.5rem;">
+            <h4 style="margin-bottom: 1rem;">Expected columns:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem;">
+              <div style="padding: 0.75rem; background: var(--color-bg-secondary); border-radius: 6px; font-size: 0.9rem;">guest_name</div>
+              <div style="padding: 0.75rem; background: var(--color-bg-secondary); border-radius: 6px; font-size: 0.9rem;">listing_name</div>
+              <div style="padding: 0.75rem; background: var(--color-bg-secondary); border-radius: 6px; font-size: 0.9rem;">channel</div>
+              <div style="padding: 0.75rem; background: var(--color-bg-secondary); border-radius: 6px; font-size: 0.9rem;">checkout_date</div>
+              <div style="padding: 0.75rem; background: var(--color-bg-secondary); border-radius: 6px; font-size: 0.9rem;">rating</div>
+              <div style="padding: 0.75rem; background: var(--color-bg-secondary); border-radius: 6px; font-size: 0.9rem;">review_comment</div>
+            </div>
+          </div>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="navigateTo('reviews')">Cancel</button>
+            <button class="btn btn-primary" id="importStep1NextBtn" disabled onclick="goToImportStep(2)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div id="importStep2" class="import-step">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 2: Processing & AI Analysis</h3>
+          <div class="progress-bar">
+            <div class="progress-fill" id="importProgressFill" style="width: 0%;"></div>
+          </div>
+          <p id="importProgressText" style="text-align: center; margin-bottom: 1rem;">Preparing...</p>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="goToImportStep(1)">Back</button>
+            <button class="btn btn-primary" id="importStep2NextBtn" disabled onclick="goToImportStep(3)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div id="importStep3" class="import-step">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 3: Review Data</h3>
+          <div style="overflow-x: auto;">
+            <table class="import-table">
+              <thead>
+                <tr>
+                  <th>Guest</th>
+                  <th>Property</th>
+                  <th>Rating</th>
+                  <th>Platform</th>
+                  <th>Comment</th>
+                </tr>
+              </thead>
+              <tbody id="importTableBody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="goToImportStep(2)">Back</button>
+            <button class="btn btn-primary" onclick="goToImportStep(4)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div id="importStep4" class="import-step">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 4: Confirm & Upload</h3>
+          <p style="margin-bottom: 1rem; color: var(--color-text-secondary);">Ready to import the following reviews:</p>
+          <div style="padding: 1rem; background: var(--color-bg-secondary); border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+              <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Reviews</div>
+                <div style="font-size: 1.5rem; font-weight: 700;" id="importSummaryCount">0</div>
+              </div>
+              <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Avg Rating</div>
+                <div style="font-size: 1.5rem; font-weight: 700;" id="importSummaryAvgRating">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="importUploadProgressFill" style="width: 0%;"></div>
+          </div>
+          <p id="importUploadStatusText" style="text-align: center; margin-bottom: 1rem;">Ready to upload</p>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="goToImportStep(3)">Back</button>
+            <button class="btn btn-primary" id="importUploadBtn" onclick="importReviewsNow()">Upload All Reviews</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    populateImportActionPropertyDropdown();
+  }
+
+  function goToImportStep(step) {
+    document.querySelectorAll('.import-step').forEach(el => el.classList.remove('active'));
+    document.getElementById('importStep' + step).classList.add('active');
+
+    document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.step:nth-child(${step})`).classList.add('active');
+
+    if (step === 2) {
+      processImportReviews();
+    } else if (step === 3) {
+      populateImportTable();
+    } else if (step === 4) {
+      populateImportSummary();
+    }
+  }
+
+  function handleImportFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        importData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (importData.length === 0) {
+          alert('No data found in Excel file');
+          return;
+        }
+
+        document.getElementById('importStep1NextBtn').disabled = false;
+        alert(`✓ Loaded ${importData.length} reviews`);
+      } catch (err) {
+        alert('Error reading file: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processImportReviews() {
+    const progressFill = document.getElementById('importProgressFill');
+    const progressText = document.getElementById('importProgressText');
+
+    processedReviews = [];
+    let completed = 0;
+
+    progressText.textContent = 'Processing...';
+
+    importData.forEach((review, idx) => {
+      setTimeout(() => {
+        const guestName = review.guest_name || 'Anonymous';
+        const listingName = review.listing_name || 'Unknown';
+        const rating = Number(review.rating) || 0;
+        const comment = review.review_comment || '';
+
+        // Simple sentiment analysis
+        let sentiment = 'Neutral';
+        const positiveWords = ['excellent', 'amazing', 'great', 'perfect', 'wonderful', 'love', 'best'];
+        const negativeWords = ['bad', 'awful', 'terrible', 'worst', 'hate', 'dirty', 'noisy', 'broken'];
+        
+        const commentLower = comment.toLowerCase();
+        const hasPositive = positiveWords.some(word => commentLower.includes(word));
+        const hasNegative = negativeWords.some(word => commentLower.includes(word));
+
+        if (hasPositive && !hasNegative) sentiment = 'Positive';
+        else if (hasNegative && !hasPositive) sentiment = 'Negative';
+        else if (rating >= 4) sentiment = 'Positive';
+        else if (rating <= 2) sentiment = 'Negative';
+
+        processedReviews.push({
+          guestName,
+          listingName,
+          channel: review.channel || 'Direct',
+          checkoutDate: review.checkout_date || '',
+          rating,
+          comment,
+          sentiment
+        });
+
+        completed++;
+        const progress = Math.round((completed / importData.length) * 100);
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `Processing... ${progress}%`;
+
+        if (completed === importData.length) {
+          progressText.textContent = '✓ Processing complete!';
+          document.getElementById('importStep2NextBtn').disabled = false;
+        }
+      }, idx * 100);
+    });
+  }
+
+  function populateImportTable() {
+    const tbody = document.getElementById('importTableBody');
+    tbody.innerHTML = '';
+
+    processedReviews.forEach((review) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${review.guestName}</td>
+        <td>${review.listingName}</td>
+        <td>${review.rating}/5</td>
+        <td>${review.channel}</td>
+        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${review.comment || '—'}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  async function populateImportActionPropertyDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      // Store for later use
+      window.importPropertiesMap = {};
+      snap.forEach(doc => {
+        window.importPropertiesMap[doc.data().propertyName] = doc.id;
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function populateImportSummary() {
+    const totalCount = processedReviews.length;
+    let totalRating = 0;
+    processedReviews.forEach(r => totalRating += r.rating);
+    const avgRating = totalCount > 0 ? (totalRating / totalCount).toFixed(1) : 0;
+
+    document.getElementById('importSummaryCount').textContent = totalCount;
+    document.getElementById('importSummaryAvgRating').textContent = avgRating + '⭐';
+  }
+
+  async function importReviewsNow() {
+    const uploadBtn = document.getElementById('importUploadBtn');
+    const uploadProgressFill = document.getElementById('importUploadProgressFill');
+    const uploadStatusText = document.getElementById('importUploadStatusText');
+
+    uploadBtn.disabled = true;
+    uploadStatusText.textContent = 'Uploading...';
+
+    let uploaded = 0;
+
+    for (let review of processedReviews) {
+      try {
+        // Find matching property
+        let propertyId = window.importPropertiesMap[review.listingName];
+        
+        if (!propertyId) {
+          // Auto-create property if not found
+          const newPropRef = await db.collection('properties').add({
+            propertyName: review.listingName,
+            location: '',
+            city: '',
+            unitType: 'Studio',
+            platform: review.channel,
+            owner: 'Imported',
+            totalReviews: 0,
+            averageRating: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          propertyId = newPropRef.id;
+        }
+
+        // Add review
+        const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(review.checkoutDate || new Date()));
+        const reviewMonth = (review.checkoutDate || new Date().toISOString().substring(0, 7)).substring(0, 7);
+
+        await db.collection('reviews').add({
+          propertyId: propertyId,
+          guestName: review.guestName,
+          rating: review.rating,
+          platform: review.channel,
+          comment: review.comment,
+          checkoutDate: checkoutDate,
+          reviewMonth: reviewMonth,
+          sentiment: review.sentiment,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update property stats
+        const propDoc = await db.collection('properties').doc(propertyId).get();
+        const currentData = propDoc.data();
+        const oldCount = currentData.totalReviews || 0;
+        const oldRating = currentData.averageRating || 0;
+        const newCount = oldCount + 1;
+        const newRating = ((oldRating * oldCount) + review.rating) / newCount;
+        
+        await db.collection('properties').doc(propertyId).update({
+          totalReviews: newCount,
+          averageRating: Math.round(newRating * 10) / 10
+        });
+
+        uploaded++;
+        const progress = Math.round((uploaded / processedReviews.length) * 100);
+        uploadProgressFill.style.width = progress + '%';
+        uploadStatusText.textContent = `Uploading... ${uploaded}/${processedReviews.length}`;
+
+      } catch (err) {
+        console.error('Upload error:', err);
+      }
+    }
+
+    uploadProgressFill.style.width = '100%';
+    uploadStatusText.textContent = `✓ Successfully imported ${uploaded} reviews!`;
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Done! Go to Reviews';
+    uploadBtn.onclick = () => navigateTo('reviews');
+  }
+
+  // ─────────────────────────────────────────────
+  // UTILITIES
+  // ─────────────────────────────────────────────
   function applyDateFilter() {
     dateFilterFrom = document.getElementById('dateFrom').value;
     dateFilterTo = document.getElementById('dateTo').value;
@@ -2115,6 +2550,9 @@
   window.closeEditActionModal = closeEditActionModal;
   window.updateAction = updateAction;
   window.deleteAction = deleteAction;
+  window.goToImportStep = goToImportStep;
+  window.handleImportFileUpload = handleImportFileUpload;
+  window.importReviewsNow = importReviewsNow;
 </script>
 </body>
 </html>
