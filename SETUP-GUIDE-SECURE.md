@@ -3,7 +3,7 @@
 ## 📂 **File Structure You Need**
 
 ```
-Your Computer (Local Folder):
+ Computer (Local Folder):
 ├── index.html           ← PUBLIC (goes to GitHub) ✅
 ├── config.js            ← PRIVATE (stays on your computer) 🔒
 ├── .gitignore           ← PUBLIC (goes to GitHub) ✅
@@ -96,7 +96,7 @@ git remote add origin https://github.com/YOUR-USERNAME/Guest-Review-Dashboard.gi
 git remote -v
 ```
 
-Replace `YOUR-USERNAME` with your GitHub username.
+Replace `USERNAME` with your GitHub username.
 
 ---
 
@@ -218,4 +218,4 @@ Your dashboard is:
 - ✅ Maintainable (easy to update)
 - ✅ Scalable (ready for SaaS)
 
-Enjoy! 🎉
+ 🎉 Definitely i will enjoy
