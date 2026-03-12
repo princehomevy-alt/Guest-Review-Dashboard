@@ -310,7 +310,7 @@
       display: inline-flex;
       align-items: center;
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: 9999px;
       font-size: 12px;
       font-weight: 600;
     }
@@ -1518,7 +1518,15 @@
   async function renderReviewsPage(container) {
     container.innerHTML = `
       <div class="page-header"><h1 class="page-title">Reviews</h1></div>
-      <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
+      
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>
+        <div style="flex:1; display:flex; gap:0.5rem; justify-content:flex-end; min-width:300px;">
+          <input type="text" id="reviewSearchInput" class="form-input" placeholder="Search guest, property, or comments..." style="max-width:400px;" onkeyup="if(event.key === 'Enter') filterReviews()">
+          <button class="btn btn-secondary" onclick="filterReviews()">Search</button>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header"><h3 class="card-title">All Reviews</h3></div>
         <div id="reviewsList" style="padding:1rem 0;"></div>
@@ -2547,6 +2555,15 @@
     });
   }
 
+  function filterReviews() {
+    const val = document.getElementById('reviewSearchInput').value.toLowerCase();
+    const items = document.querySelectorAll('.review-item');
+    items.forEach(item => {
+      const text = item.innerText.toLowerCase();
+      item.style.display = text.includes(val) ? 'block' : 'none';
+    });
+  }
+
   async function init() {
     loadTheme();
     initializeFirebase();
@@ -2566,6 +2583,7 @@
   window.applyDateFilter = applyDateFilter;
   window.clearDateFilter = clearDateFilter;
   window.filterProperties = filterProperties;
+  window.filterReviews = filterReviews;
   window.openPropertyModal = openPropertyModal;
   window.closePropertyModal = closePropertyModal;
   window.saveProperty = saveProperty;
