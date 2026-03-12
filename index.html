@@ -1,73 +1,1142 @@
-I want you to
-Do not change the code but update.
-✅ Map Hostaway column names correctly
-✅ Convert ratings from 1-10 to 1-5 scale
-✅ Group by property automatically
-✅ Parse dates correctly
-✅ Handle empty reviews (some rows have no rating/review)
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guest Review Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-// Maps Hostaway columns to dashboard format
-guest_name     ← from "Guest name" column
-listing_name   ← from "Listing Name" column
-channel        ← from "Channel" column Airbnb, bookingcom, Direct,vrbo
-checkout_date  ← from "Check-out" column
-rating         ← from "Rating" column
-review_comment ← from "Overall review" column
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1e40af;
+      --color-success: #10b981;
+      --color-danger: #ef4444;
+      --color-warning: #f59e0b;
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-text-primary: #111827;
+      --color-text-secondary: #6b7280;
+      --color-border: #e5e7eb;
+    }
+    [data-theme="dark"] {
+      --color-bg: #0f172a;
+      --color-bg-secondary: #1e293b;
+      --color-text-primary: #f8fafc;
+      --color-text-secondary: #cbd5e1;
+      --color-border: #334155;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      transition: all 0.2s;
+    }
 
+    #loginScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .login-logo-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-logo-text { font-size: 1.3rem; font-weight: 700; color: #111827; }
+    .login-logo-sub { font-size: 0.8rem; color: #6b7280; }
+    .login-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 0.4rem;
+    }
+    .login-subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+    .login-form-group { margin-bottom: 1.25rem; }
+    .login-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+    .login-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #111827;
+      background: #f9fafb;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .login-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+      background: #fff;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    .login-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .login-btn:active { transform: translateY(0); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #dc2626;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .login-spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
 
+    #dashboardApp { display: none; }
 
-### ✅ **2. Auto-Converts Rating Scale**
-- Your CSV has ratings 1-10 (stars)
-- Dashboard needs 1-5 
-- **Code automatically converts:** 10 → 5, 9 → 4.5, 8 → 4, etc.
+    .app-container {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: var(--color-bg-secondary);
+      border-right: 1px solid var(--color-border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .sidebar-brand-icon {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--color-primary), #0891b2);
+      color: white;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .nav-item {
+      padding: 0.9rem 1.4rem;
+      border-radius: 6px;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .nav-item:hover { color: var(--color-primary); background: rgba(37,99,235,0.07); }
+    .nav-item.active { background: var(--color-primary); color: white; }
+    .sidebar-footer {
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .theme-toggle {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .logout-btn {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #ef4444;
+      border-radius: 6px;
+      padding: 0 0.75rem;
+      height: 40px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover { background: rgba(239,68,68,0.18); }
+    .main-content {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+    }
+    .page-header { margin-bottom: 1.75rem; }
+    .page-title { font-size: 1.8rem; font-weight: 600; }
+    .card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .card-title { font-size: 1.25rem; font-weight: 600; }
+    .metric-card {
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--color-primary), #0891b2);
+    }
+    .metric-label {
+      font-size: 0.8rem;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+    .metric-value { font-size: 2.2rem; font-weight: 700; }
+    .grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .btn {
+      padding: 0.6rem 1.1rem;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--color-primary); color: white; }
+    .btn-primary:hover { background: var(--color-primary-dark); }
+    .btn-secondary { background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
+    .btn-danger { background: var(--color-danger); color: white; }
+    .table { width:100%; border-collapse: collapse; font-size: 14px; }
+    .table thead {
+      background: var(--color-bg-secondary);
+      border-bottom: 2px solid var(--color-border);
+    }
+    .table th, .table td { padding: 1rem; text-align: left; }
+    .table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .table tbody tr:hover { background: rgba(37,99,235,0.07); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-success { background: rgba(16,185,129,0.1); color: var(--color-success); }
+    .badge-danger { background: rgba(239,68,68,0.1); color: var(--color-danger); }
+    .badge-warning { background: rgba(245,158,11,0.1); color: var(--color-warning); }
+    .badge-primary { background: rgba(37,99,235,0.1); color: var(--color-primary); }
+    .property-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .property-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .property-stats { display: flex; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; gap: 0.3rem; }
+    .stat-label { font-size: 0.8rem; color: var(--color-text-secondary); }
+    .stat-value { font-size: 1.2rem; font-weight: 600; }
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--color-bg);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .modal-title { font-size: 1.25rem; font-weight: 600; }
+    .modal-close { background:none; border:none; font-size: 1.6rem; cursor:pointer; color: var(--color-text-secondary); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end; gap: 1rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { font-weight: 500; margin-bottom: 0.4rem; display: block; font-size: 0.9rem; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .form-textarea { min-height: 110px; resize: vertical; }
+    .chart-container { position: relative; height: 320px; }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 4rem 1rem;
+      color: var(--color-text-secondary);
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .risk-banner {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 1rem;
+    }
+    .review-item {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .review-item:hover {
+      background: rgba(37,99,235,0.07);
+      transform: translateY(-1px);
+    }
 
-### ✅ **3. Filters Empty Reviews**
-- Only imports rows with **rating OR comment**
-- Ignores pending/expired bookings with no review
-- Cleans up messy data automatically
+    .step-indicator {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: space-between;
+    }
+    .step {
+      flex: 1;
+      text-align: center;
+      padding: 1rem;
+      border-radius: 8px;
+      background: var(--color-bg-secondary);
+      cursor: pointer;
+    }
+    .step.active {
+      background: var(--color-primary);
+      color: white;
+    }
+    .step-number {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 0.25rem;
+    }
+    .step-title {
+      font-size: 0.9rem;
+    }
+    .import-step {
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    .import-step.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .upload-area {
+      border: 2px dashed var(--color-border);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-area:hover {
+      border-color: var(--color-primary);
+      background: rgba(37,99,235,0.05);
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--color-bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .import-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 1rem 0;
+    }
+    .import-table th {
+      background: var(--color-bg-secondary);
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--color-border);
+    }
+    .import-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .import-table tbody tr:hover {
+      background: rgba(37,99,235,0.05);
+    }
 
-### ✅ **4. Auto-Creates Missing Properties**
-- If property name doesn't exist in your dashboard
-- System creates it automatically from CSV data
-- No manual setup needed!
+    @media (max-width: 992px) {
+      .app-container { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; z-index: 900; transform: translateX(-100%); transition: transform 0.3s; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { padding: 1rem; }
+      .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
 
-### ✅ **5. Shows Actual Data on Step 3**
-- Table preview shows what's being imported
-- Guest name, property name, rating, platform, comment
-- All working correctly now
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon">GR</div>
+        <div>
+          <div class="login-logo-text">Guest Reviews</div>
+          <div class="login-logo-sub">Dashboard</div>
+        </div>
+      </div>
+      <h2 class="login-title">Admin Login</h2>
+      <p class="login-subtitle">Sign in to access the dashboard</p>
 
----
+      <div id="loginError" class="login-error"></div>
 
-## **TO TEST NOW:**
+      <div class="login-form-group">
+        <label class="login-label" for="loginEmail">Email Address</label>
+        <input type="email" id="loginEmail" class="login-input" placeholder="admin@example.com" autocomplete="username">
+      </div>
+      <div class="login-form-group">
+        <label class="login-label" for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" class="login-input" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
+    </div>
+  </div>
 
-1. **Go to:** 📥 Import Hostaway (in sidebar)
-2. **Upload:** Your `reviews_20260312.csv` file
-3. **Watch the magic:**
-   - Step 1: Shows "Loaded X reviews" ✓
-   - Step 2: Processes & analyzes ✓
-   - Step 3: Shows preview table with real data ✓
-   - Step 4: Uploads all to Firebase ✓
-4. **Check:** Reviews page - all imported reviews appear with property names!
+  <div id="dashboardApp">
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-icon">GR</div>
+          <div>
+            <div style="font-weight:600;">Guest Reviews</div>
+            <div style="font-size:0.78rem; opacity:0.7;">Dashboard</div>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="nav-item active" onclick="navigateTo('dashboard')">Dashboard</button>
+          <button class="nav-item" onclick="navigateTo('analytics')">Property Analytics</button>
+          <button class="nav-item" onclick="navigateTo('properties')">Properties</button>
+          <button class="nav-item" onclick="navigateTo('reviews')">Reviews</button>
+          <button class="nav-item" onclick="navigateTo('actions')">Action Plans</button>
+          <button class="nav-item" onclick="navigateTo('import')">📥 Import Hostaway</button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+          <div style="font-size:0.82rem; opacity:0.8; flex:1;">
+            <div id="statusIndicator">Initializing...</div>
+            <div id="firebaseStatus" style="color:var(--color-success);">Connecting...</div>
+          </div>
+          <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻ Logout</button>
+        </div>
+      </aside>
 
----
+      <main class="main-content" id="mainContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Loading dashboard...</span>
+        </div>
+      </main>
+    </div>
+  </div>
 
-## **Example Flow:**
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCvg6bacuKjH7bxlq_AUJWVGZeXgWDwlIA",
+    authDomain: "guestreviewdashboard.firebaseapp.com",
+    projectId: "guestreviewdashboard",
+    storageBucket: "guestreviewdashboard.firebasestorage.app",
+    messagingSenderId: "726657937453",
+    appId: "1:726657937453:web:f87dfc6273467d8051c8a4"
+  };
 
-Your CSV has:
-Guest name: "Stephen Giffin"
-Listing Name: "1306 - Harbour Gate Tower, Dubai Creek Harbour"
-Channel: "homeaway"
-Check-out: "2025-11-01 11:00:00"
-Rating: 9
-Overall review: "Amazing stay!"
+  const ADMIN_EMAIL = "chakusaprince@gmail.com";
 
+  let db;
+  let auth;
+  let currentPage = 'dashboard';
+  let dateFilterFrom = null;
+  let dateFilterTo = null;
+  let chartInstances = {};
 
+  let importData = [];
+  let processedReviews = [];
 
-Gets converted to:
-guestName: "Stephen Giffin"
-listingName: "1306 - Harbour Gate Tower, Dubai Creek Harbour"
-channel: "homeaway"
-checkoutDate: "2025-11-01"
-rating: 4.5 ⭐ (converted from 9/10)
-comment: "Amazing stay!"
-sentiment: "Positive" (auto-detected)
+  function initializeFirebase() {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      auth = firebase.auth();
+      updateStatus('Connected', 'success');
+
+      auth.onAuthStateChanged(function(user) {
+        if (user && user.email === ADMIN_EMAIL) {
+          showDashboard();
+        } else if (user) {
+          auth.signOut();
+          showLoginError("Access denied. You are not authorized to access this dashboard.");
+        } else {
+          showLogin();
+        }
+      });
+
+      return true;
+    } catch (err) {
+      console.error("Firebase init failed", err);
+      updateStatus('Connection failed', 'error');
+      return false;
+    }
+  }
+
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboardApp').style.display = 'none';
+  }
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboardApp').style.display = 'block';
+    navigateTo('dashboard');
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideLoginError() {
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+
+    hideLoginError();
+
+    if (!email || !password) {
+      showLoginError("Please enter your email and password.");
+      return;
+    }
+
+    if (email !== ADMIN_EMAIL) {
+      showLoginError("Access denied. This account is not authorized.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="login-spinner"></span>Signing in...';
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (err) {
+      let msg = "Login failed. Please check your credentials.";
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        msg = "Invalid email or password. Please try again.";
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = "Too many failed attempts. Please try again later.";
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = "Network error. Please check your connection.";
+      }
+      showLoginError(msg);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Sign In';
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await auth.signOut();
+    } catch (err) {
+      console.error("Logout error", err);
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+      handleLogin();
+    }
+  });
+
+  function updateStatus(msg, type = 'info') {
+    document.getElementById('statusIndicator').textContent = msg;
+    const el = document.getElementById('firebaseStatus');
+    if (type === 'success') {
+      el.textContent = 'Connected';
+      el.style.color = 'var(--color-success)';
+    } else if (type === 'error') {
+      el.textContent = 'Error';
+      el.style.color = 'var(--color-danger)';
+    }
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    document.getElementById('themeToggle').textContent = theme === 'light' ? '☀️' : '🌙';
+  }
+
+  function loadTheme() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').textContent = saved === 'light' ? '☀️' : '🌙';
+  }
+
+  function navigateTo(page) {
+    currentPage = page;
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[onclick="navigateTo('${page}')"]`).classList.add('active');
+    const content = document.getElementById('mainContent');
+    if (page === 'dashboard') renderDashboard(content);
+    else if (page === 'analytics') renderAnalyticsPage(content);
+    else if (page === 'properties') renderPropertiesPage(content);
+    else if (page === 'reviews') renderReviewsPage(content);
+    else if (page === 'actions') renderActionsPage(content);
+    else if (page === 'import') renderImportPage(content);
+  }
+
+  async function renderDashboard(container) {
+    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+  }
+
+  async function renderAnalyticsPage(container) {
+    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+  }
+
+  async function renderPropertiesPage(container) {
+    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+  }
+
+  async function renderReviewsPage(container) {
+    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+  }
+
+  async function renderActionsPage(container) {
+    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+  }
+
+  function renderImportPage(container) {
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">📥 Import Hostaway Reviews</h1>
+        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Auto-converts ratings (10→5), maps columns, filters empty reviews</p>
+      </div>
+
+      <div class="step-indicator">
+        <div class="step active" onclick="goToImportStep(1)">
+          <div class="step-number">1</div>
+          <div class="step-title">Upload</div>
+        </div>
+        <div class="step" onclick="goToImportStep(2)">
+          <div class="step-number">2</div>
+          <div class="step-title">Process</div>
+        </div>
+        <div class="step" onclick="goToImportStep(3)">
+          <div class="step-number">3</div>
+          <div class="step-title">Review</div>
+        </div>
+        <div class="step" onclick="goToImportStep(4)">
+          <div class="step-number">4</div>
+          <div class="step-title">Upload</div>
+        </div>
+      </div>
+
+      <div id="importStep1" class="import-step active">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 1: Upload Hostaway CSV</h3>
+          <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p style="font-size: 2rem; margin-bottom: 0.5rem;">📁</p>
+            <p style="font-weight: 600; margin-bottom: 0.5rem;">Click to upload Hostaway CSV</p>
+            <p style="font-size: 0.9rem; color: var(--color-text-secondary);">(.csv, .xlsx)</p>
+          </div>
+          <input type="file" id="fileInput" hidden accept=".xlsx,.xls,.csv" onchange="handleImportFileUpload(event)">
+          <div style="margin-top: 1.5rem; padding: 1rem; background: var(--color-bg-secondary); border-radius: 8px;">
+            <h4 style="margin-bottom: 1rem;">✅ Auto-detects Hostaway columns:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.9rem;">
+              <div><strong>"Guest name"</strong> → guest_name</div>
+              <div><strong>"Listing Name"</strong> → listing_name</div>
+              <div><strong>"Channel"</strong> → channel</div>
+              <div><strong>"Check-out"</strong> → checkout_date</div>
+              <div><strong>"Rating"</strong> (1-10) → <span style="color: var(--color-success);">converted to 1-5</span></div>
+              <div><strong>"Overall review"</strong> → comment</div>
+            </div>
+          </div>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="navigateTo('reviews')">Cancel</button>
+            <button class="btn btn-primary" id="importStep1NextBtn" disabled onclick="goToImportStep(2)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="importStep2" class="import-step">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 2: Processing</h3>
+          <div class="progress-bar">
+            <div class="progress-fill" id="importProgressFill" style="width: 0%;"></div>
+          </div>
+          <p id="importProgressText" style="text-align: center; margin-bottom: 1rem;">Preparing...</p>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="goToImportStep(1)">Back</button>
+            <button class="btn btn-primary" id="importStep2NextBtn" disabled onclick="goToImportStep(3)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="importStep3" class="import-step">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 3: Review Data</h3>
+          <div style="overflow-x: auto;">
+            <table class="import-table">
+              <thead>
+                <tr>
+                  <th>Guest</th>
+                  <th>Property</th>
+                  <th>Rating</th>
+                  <th>Platform</th>
+                  <th>Checkout</th>
+                  <th>Comment</th>
+                </tr>
+              </thead>
+              <tbody id="importTableBody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="goToImportStep(2)">Back</button>
+            <button class="btn btn-primary" onclick="goToImportStep(4)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="importStep4" class="import-step">
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Step 4: Upload to Firebase</h3>
+          <p style="margin-bottom: 1rem; color: var(--color-text-secondary);">Ready to import:</p>
+          <div style="padding: 1rem; background: var(--color-bg-secondary); border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+              <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Reviews</div>
+                <div style="font-size: 1.5rem; font-weight: 700;" id="importSummaryCount">0</div>
+              </div>
+              <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Avg Rating</div>
+                <div style="font-size: 1.5rem; font-weight: 700;" id="importSummaryAvgRating">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="importUploadProgressFill" style="width: 0%;"></div>
+          </div>
+          <p id="importUploadStatusText" style="text-align: center; margin-bottom: 1rem;">Ready</p>
+          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+            <button class="btn btn-secondary" onclick="goToImportStep(3)">Back</button>
+            <button class="btn btn-primary" id="importUploadBtn" onclick="importReviewsNow()">Upload All</button>
+          </div>
+        </div>
+      </div>
+    `;
+    populateImportActionPropertyDropdown();
+  }
+
+  function goToImportStep(step) {
+    document.querySelectorAll('.import-step').forEach(el => el.classList.remove('active'));
+    document.getElementById('importStep' + step).classList.add('active');
+
+    document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.step:nth-child(${step})`).classList.add('active');
+
+    if (step === 2) {
+      processImportReviews();
+    } else if (step === 3) {
+      populateImportTable();
+    } else if (step === 4) {
+      populateImportSummary();
+    }
+  }
+
+  function handleImportFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (rawData.length === 0) {
+          alert('No data found in file');
+          return;
+        }
+
+        importData = rawData.map(row => {
+          const mapped = {
+            guest_name: row['Guest name'] || row['guest_name'] || '',
+            listing_name: row['Listing Name'] || row['listing_name'] || '',
+            channel: row['Channel'] || row['channel'] || 'Direct',
+            checkout_date: row['Check-out'] || row['checkout_date'] || '',
+            rating: row['Rating'] || row['rating'] || 0,
+            review_comment: row['Overall review'] || row['review_comment'] || ''
+          };
+
+          if (mapped.channel.toLowerCase() === 'homeaway') {
+            mapped.channel = 'Vrbo';
+          } else if (mapped.channel.toLowerCase() === 'bookingcom') {
+            mapped.channel = 'Booking.com';
+          } else if (mapped.channel.toLowerCase() === 'airbnb') {
+            mapped.channel = 'Airbnb';
+          }
+
+          return mapped;
+        }).filter(row => {
+          const hasRating = row.rating && Number(row.rating) > 0;
+          const hasComment = row.review_comment && row.review_comment.trim().length > 0;
+          return hasRating || hasComment;
+        });
+
+        if (importData.length === 0) {
+          alert('No valid reviews found');
+          return;
+        }
+
+        document.getElementById('importStep1NextBtn').disabled = false;
+        alert(`✓ Loaded ${importData.length} reviews (filtered from ${rawData.length} rows)`);
+      } catch (err) {
+        alert('Error reading file: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processImportReviews() {
+    const progressFill = document.getElementById('importProgressFill');
+    const progressText = document.getElementById('importProgressText');
+
+    processedReviews = [];
+    let completed = 0;
+
+    progressText.textContent = 'Processing...';
+
+    importData.forEach((review, idx) => {
+      setTimeout(() => {
+        const guestName = review.guest_name || 'Anonymous';
+        const listingName = review.listing_name || 'Unknown';
+        const rawRating = Number(review.rating) || 0;
+
+        const rating = rawRating > 5 ? Math.round((rawRating / 2) * 10) / 10 : rawRating;
+
+        const comment = review.review_comment || '';
+
+        let sentiment = 'Neutral';
+        const positiveWords = ['excellent', 'amazing', 'great', 'perfect', 'wonderful', 'love', 'best'];
+        const negativeWords = ['bad', 'awful', 'terrible', 'worst', 'hate', 'dirty', 'noisy', 'broken'];
+
+        const commentLower = comment.toLowerCase();
+        const hasPositive = positiveWords.some(word => commentLower.includes(word));
+        const hasNegative = negativeWords.some(word => commentLower.includes(word));
+
+        if (hasPositive && !hasNegative) sentiment = 'Positive';
+        else if (hasNegative && !hasPositive) sentiment = 'Negative';
+        else if (rating >= 4) sentiment = 'Positive';
+        else if (rating <= 2) sentiment = 'Negative';
+
+        let checkoutDate = review.checkout_date || '';
+        if (checkoutDate && typeof checkoutDate === 'string') {
+          checkoutDate = checkoutDate.split(' ')[0];
+        }
+
+        processedReviews.push({
+          guestName,
+          listingName,
+          channel: review.channel || 'Direct',
+          checkoutDate,
+          rating,
+          comment,
+          sentiment
+        });
+
+        completed++;
+        const progress = Math.round((completed / importData.length) * 100);
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `Processing... ${progress}%`;
+
+        if (completed === importData.length) {
+          progressText.textContent = '✓ Complete!';
+          document.getElementById('importStep2NextBtn').disabled = false;
+        }
+      }, idx * 50);
+    });
+  }
+
+  function populateImportTable() {
+    const tbody = document.getElementById('importTableBody');
+    tbody.innerHTML = '';
+
+    processedReviews.forEach((review) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${review.guestName}</td>
+        <td>${review.listingName}</td>
+        <td>${review.rating}/5</td>
+        <td>${review.channel}</td>
+        <td>${review.checkoutDate || 'N/A'}</td>
+        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${review.comment || '—'}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  async function populateImportActionPropertyDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      window.importPropertiesMap = {};
+      snap.forEach(doc => {
+        window.importPropertiesMap[doc.data().propertyName] = doc.id;
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function populateImportSummary() {
+    const totalCount = processedReviews.length;
+    let totalRating = 0;
+    processedReviews.forEach(r => totalRating += r.rating);
+    const avgRating = totalCount > 0 ? (totalRating / totalCount).toFixed(1) : 0;
+
+    document.getElementById('importSummaryCount').textContent = totalCount;
+    document.getElementById('importSummaryAvgRating').textContent = avgRating + '⭐';
+  }
+
+  async function importReviewsNow() {
+    const uploadBtn = document.getElementById('importUploadBtn');
+    const uploadProgressFill = document.getElementById('importUploadProgressFill');
+    const uploadStatusText = document.getElementById('importUploadStatusText');
+
+    uploadBtn.disabled = true;
+    uploadStatusText.textContent = 'Uploading...';
+
+    let uploaded = 0;
+
+    for (let review of processedReviews) {
+      try {
+        let propertyId = window.importPropertiesMap[review.listingName];
+
+        if (!propertyId) {
+          const newPropRef = await db.collection('properties').add({
+            propertyName: review.listingName,
+            location: '',
+            city: '',
+            unitType: 'Studio',
+            platform: review.channel,
+            owner: 'Imported',
+            totalReviews: 0,
+            averageRating: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          propertyId = newPropRef.id;
+          window.importPropertiesMap[review.listingName] = propertyId;
+        }
+
+        const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(review.checkoutDate || new Date()));
+        const reviewMonth = (review.checkoutDate || new Date().toISOString().substring(0, 7)).substring(0, 7);
+
+        await db.collection('reviews').add({
+          propertyId: propertyId,
+          guestName: review.guestName,
+          rating: review.rating,
+          platform: review.channel,
+          comment: review.comment,
+          checkoutDate: checkoutDate,
+          reviewMonth: reviewMonth,
+          sentiment: review.sentiment,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const propDoc = await db.collection('properties').doc(propertyId).get();
+        const currentData = propDoc.data();
+        const oldCount = currentData.totalReviews || 0;
+        const oldRating = currentData.averageRating || 0;
+        const newCount = oldCount + 1;
+        const newRating = ((oldRating * oldCount) + review.rating) / newCount;
+
+        await db.collection('properties').doc(propertyId).update({
+          totalReviews: newCount,
+          averageRating: Math.round(newRating * 10) / 10
+        });
+
+        uploaded++;
+        const progress = Math.round((uploaded / processedReviews.length) * 100);
+        uploadProgressFill.style.width = progress + '%';
+        uploadStatusText.textContent = `Uploading... ${uploaded}/${processedReviews.length}`;
+
+      } catch (err) {
+        console.error('Upload error:', err);
+      }
+    }
+
+    uploadProgressFill.style.width = '100%';
+    uploadStatusText.textContent = `✓ Successfully imported ${uploaded} reviews!`;
+    uploadBtn.textContent = 'Done! Go to Reviews';
+    uploadBtn.onclick = () => navigateTo('reviews');
+  }
+
+  function applyDateFilter() {}
+  function clearDateFilter() {}
+  function filterProperties() {}
+
+  async function init() {
+    loadTheme();
+    initializeFirebase();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.navigateTo = navigateTo;
+  window.toggleTheme = toggleTheme;
+  window.handleLogin = handleLogin;
+  window.handleLogout = handleLogout;
+  window.goToImportStep = goToImportStep;
+  window.handleImportFileUpload = handleImportFileUpload;
+  window.importReviewsNow = importReviewsNow;
+</script>
+</body>
+</html>
