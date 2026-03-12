@@ -38,6 +38,7 @@
       transition: all 0.2s;
     }
 
+    /* ── LOGIN SCREEN ── */
     #loginScreen {
       display: flex;
       align-items: center;
@@ -147,6 +148,7 @@
       margin-right: 6px;
     }
 
+    /* ── DASHBOARD ── */
     #dashboardApp { display: none; }
 
     .app-container {
@@ -316,18 +318,6 @@
     .badge-danger { background: rgba(239,68,68,0.1); color: var(--color-danger); }
     .badge-warning { background: rgba(245,158,11,0.1); color: var(--color-warning); }
     .badge-primary { background: rgba(37,99,235,0.1); color: var(--color-primary); }
-    .property-card {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .property-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .property-stats { display: flex; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
-    .stat { display: flex; flex-direction: column; gap: 0.3rem; }
-    .stat-label { font-size: 0.8rem; color: var(--color-text-secondary); }
-    .stat-value { font-size: 1.2rem; font-weight: 600; }
     .modal-overlay {
       display: none;
       position: fixed; inset: 0;
@@ -390,31 +380,6 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .risk-banner {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      color: #92400e;
-      padding: 1.25rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-      display: none;
-      align-items: center;
-      gap: 1rem;
-    }
-    .review-item {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .review-item:hover {
-      background: rgba(37,99,235,0.07);
-      transform: translateY(-1px);
-    }
-
     .step-indicator {
       display: flex;
       gap: 1rem;
@@ -505,6 +470,7 @@
 </head>
 <body>
 
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen">
     <div class="login-card">
       <div class="login-logo">
@@ -531,6 +497,7 @@
     </div>
   </div>
 
+  <!-- DASHBOARD APP -->
   <div id="dashboardApp">
     <div class="app-container">
       <aside class="sidebar">
@@ -586,7 +553,6 @@
   let dateFilterFrom = null;
   let dateFilterTo = null;
   let chartInstances = {};
-
   let importData = [];
   let processedReviews = [];
 
@@ -728,31 +694,686 @@
     else if (page === 'import') renderImportPage(content);
   }
 
+  // ─────────────────────────────────────────────
+  // DASHBOARD PAGE
+  // ─────────────────────────────────────────────
   async function renderDashboard(container) {
-    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">Executive Overview</h1>
+        <div style="display:flex; gap:1rem; margin-top:1rem; flex-wrap:wrap;">
+          <div>
+            <label style="font-size:0.9rem; color:var(--color-text-secondary);">From Date (Checkout)</label>
+            <input type="date" id="dateFrom" class="form-input" style="width:140px;">
+          </div>
+          <div>
+            <label style="font-size:0.9rem; color:var(--color-text-secondary);">To Date (Checkout)</label>
+            <input type="date" id="dateTo" class="form-input" style="width:140px;">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn btn-primary" onclick="applyDateFilter()" style="margin:0;">Filter</button>
+            <button class="btn btn-secondary" onclick="clearDateFilter()" style="margin:0; margin-left:0.5rem;">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-4">
+        <div class="metric-card">
+          <div class="metric-label">Total Reviews</div>
+          <div class="metric-value" id="totalReviews">—</div>
+        </div>
+        <div class="metric-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <div class="metric-label">Average Rating</div>
+          <div class="metric-value" id="avgRating">—</div>
+        </div>
+        <div class="metric-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+          <div class="metric-label">Low Ratings (≤2)</div>
+          <div class="metric-value" id="lowRatings">—</div>
+        </div>
+        <div class="metric-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <div class="metric-label">Properties</div>
+          <div class="metric-value" id="totalProperties">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Reviews by Platform</h3></div>
+          <div class="chart-container"><canvas id="platformChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Rating Distribution</h3></div>
+          <div class="chart-container"><canvas id="ratingChart"></canvas></div>
+        </div>
+      </div>
+    `;
+
+    try {
+      const [revs, props] = await Promise.all([
+        db.collection('reviews').get(),
+        db.collection('properties').get()
+      ]);
+
+      let reviewsList = [];
+      revs.forEach(doc => {
+        const d = doc.data();
+        reviewsList.push(d);
+      });
+
+      let totalReviews = reviewsList.length;
+      let totalRating = 0;
+      let lowRatings = 0;
+      const platformCount = { Airbnb:0, "Booking.com":0, Direct:0, Vrbo:0, bookingcom:0, homeaway:0 };
+      const ratingCount = {1:0, 2:0, 3:0, 4:0, 5:0};
+
+      reviewsList.forEach(d => {
+        const r = Number(d.rating) || 0;
+        totalRating += r;
+        if (r <= 2) lowRatings++;
+        const rRounded = Math.round(r);
+        ratingCount[rRounded] = (ratingCount[rRounded] || 0) + 1;
+        const p = (d.platform || "Direct").toLowerCase();
+        if (platformCount[p] !== undefined) {
+          platformCount[p]++;
+        } else {
+          platformCount['Direct']++;
+        }
+      });
+
+      document.getElementById('totalReviews').textContent = totalReviews;
+      document.getElementById('avgRating').textContent = totalReviews ? (totalRating / totalReviews).toFixed(1) : "—";
+      document.getElementById('lowRatings').textContent = lowRatings;
+      document.getElementById('totalProperties').textContent = props.size;
+
+      ['platformChart','ratingChart'].forEach(key => {
+        if (chartInstances[key]) chartInstances[key].destroy();
+      });
+
+      const colors = ['#2563eb','#10b981','#f59e0b','#8b5cf6'];
+
+      chartInstances.platformChart = new Chart(document.getElementById('platformChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(platformCount),
+          datasets: [{ label: 'Reviews', data: Object.values(platformCount), backgroundColor: colors, borderRadius: 6 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
+      });
+
+      chartInstances.ratingChart = new Chart(document.getElementById('ratingChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['1★','2★','3★','4★','5★'],
+          datasets: [{
+            data: [ratingCount[1],ratingCount[2],ratingCount[3],ratingCount[4],ratingCount[5]],
+            backgroundColor: ['#ef4444','#f59e0b','#fbbf24','#84cc16','#10b981']
+          }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+      });
+
+    } catch (err) {
+      console.error("Dashboard error:", err);
+      container.innerHTML += `<p style="color:var(--color-danger);">Error: ${err.message}</p>`;
+    }
   }
 
+  // ─────────────────────────────────────────────
+  // ANALYTICS PAGE
+  // ─────────────────────────────────────────────
   async function renderAnalyticsPage(container) {
-    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">Property Analytics</h1>
+      </div>
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading analytics...</span>
+      </div>
+    `;
+
+    try {
+      const propsSnap = await db.collection('properties').get();
+      const reviewsSnap = await db.collection('reviews').get();
+
+      const analytics = {};
+      propsSnap.forEach(doc => {
+        analytics[doc.id] = {
+          name: doc.data().propertyName,
+          reviews: [],
+          totalReviews: 0,
+          avgRating: 0,
+          lowRatings: 0,
+          highRatings: 0
+        };
+      });
+
+      reviewsSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.propertyId && analytics[d.propertyId]) {
+          analytics[d.propertyId].reviews.push(d);
+        }
+      });
+
+      for (let propId in analytics) {
+        const prop = analytics[propId];
+        if (prop.reviews.length > 0) {
+          let totalRating = 0;
+          prop.reviews.forEach(rev => {
+            const rating = Number(rev.rating) || 0;
+            totalRating += rating;
+            if (rating <= 2) prop.lowRatings++;
+            if (rating >= 4) prop.highRatings++;
+          });
+          prop.totalReviews = prop.reviews.length;
+          prop.avgRating = Math.round((totalRating / prop.reviews.length) * 10) / 10;
+        }
+      }
+
+      const topPerformers = Object.entries(analytics)
+        .filter(([id, p]) => p.totalReviews > 0)
+        .sort((a, b) => b[1].avgRating - a[1].avgRating)
+        .slice(0, 5);
+
+      let html = `
+        <div class="grid grid-3">
+          <div class="metric-card">
+            <div class="metric-label">Total Properties</div>
+            <div class="metric-value">${Object.keys(analytics).length}</div>
+          </div>
+          <div class="metric-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <div class="metric-label">Properties with Reviews</div>
+            <div class="metric-value">${Object.values(analytics).filter(p => p.totalReviews > 0).length}</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">⭐ Top-Performing Properties</h3></div>
+          <div id="topPerformersSection"></div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      let topHtml = topPerformers.length === 0
+        ? '<p style="text-align:center;color:var(--color-text-secondary);padding:2rem;">No reviews yet</p>'
+        : topPerformers.map(([id, prop]) => `
+            <div style="background: var(--color-bg-secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--color-success);">
+              <div style="font-weight:600; margin-bottom: 0.5rem;">${prop.name}</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; font-size: 0.9rem;">
+                <div><div style="color:var(--color-text-secondary);">Rating</div><div style="font-weight: 600; color: var(--color-success);">${prop.avgRating}⭐</div></div>
+                <div><div style="color:var(--color-text-secondary);">Reviews</div><div style="font-weight: 600;">${prop.totalReviews}</div></div>
+                <div><div style="color:var(--color-text-secondary);">Positive</div><div style="font-weight: 600; color: var(--color-success);">${prop.highRatings}</div></div>
+              </div>
+            </div>
+          `).join('');
+      document.getElementById('topPerformersSection').innerHTML = topHtml;
+
+    } catch (err) {
+      console.error("Analytics error:", err);
+      container.innerHTML = `<p style="color:var(--color-danger);">Error: ${err.message}</p>`;
+    }
   }
 
+  // ─────────────────────────────────────────────
+  // PROPERTIES PAGE
+  // ─────────────────────────────────────────────
   async function renderPropertiesPage(container) {
-    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">Properties</h1>
+        <button class="btn btn-primary" onclick="openPropertyModal()" style="margin-top:1rem;">+ Add Property</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">All Properties</h3></div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>City</th>
+                <th>Type</th>
+                <th>Reviews</th>
+                <th>Avg Rating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="propertiesTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:3rem;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="propertyModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Add New Property</h3>
+            <button class="modal-close" onclick="closePropertyModal()">×</button>
+          </div>
+          <form id="propertyForm" onsubmit="saveProperty(event)">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property Name</label>
+                <input type="text" name="propertyName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit Type</label>
+                <select name="unitType" class="form-select" required>
+                  <option value="">Select...</option>
+                  <option>Studio</option><option>1BR</option><option>2BR</option><option>3BR</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closePropertyModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    await loadProperties();
   }
 
+  async function loadProperties() {
+    try {
+      const snap = await db.collection('properties').get();
+      const tbody = document.getElementById('propertiesTableBody');
+      if (snap.empty) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem;">No properties yet</td></tr>';
+        return;
+      }
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        html += `
+          <tr>
+            <td><strong>${d.propertyName || '—'}</strong></td>
+            <td>${d.city || '—'}</td>
+            <td>${d.unitType || '—'}</td>
+            <td>${d.totalReviews || 0}</td>
+            <td>${Number(d.averageRating || 0).toFixed(1)}⭐</td>
+            <td>
+              <button class="btn btn-danger" onclick="deleteProperty('${doc.id}')">Delete</button>
+            </td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function openPropertyModal() {
+    document.getElementById('propertyModal').classList.add('active');
+  }
+
+  function closePropertyModal() {
+    document.getElementById('propertyModal').classList.remove('active');
+    document.getElementById('propertyForm')?.reset();
+  }
+
+  async function saveProperty(e) {
+    e.preventDefault();
+    const form = e.target;
+    try {
+      await db.collection('properties').add({
+        propertyName: form.propertyName.value.trim(),
+        city: form.city.value.trim(),
+        unitType: form.unitType.value,
+        totalReviews: 0,
+        averageRating: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closePropertyModal();
+      await renderPropertiesPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function deleteProperty(id) {
+    if (!confirm("Delete this property?")) return;
+    try {
+      await db.collection('properties').doc(id).delete();
+      await renderPropertiesPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Delete failed");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // REVIEWS PAGE
+  // ─────────────────────────────────────────────
   async function renderReviewsPage(container) {
-    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    container.innerHTML = `
+      <div class="page-header"><h1 class="page-title">Reviews</h1></div>
+      <button class="btn btn-primary" onclick="openReviewModal()" style="margin-bottom: 1.5rem;">+ Add Review</button>
+      <div id="reviewsList"></div>
+
+      <div id="reviewModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Add Review</h3>
+            <button class="modal-close" onclick="closeReviewModal()">×</button>
+          </div>
+          <form id="reviewForm" onsubmit="saveReview(event)">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property *</label>
+                <select id="reviewPropertySelect" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guest Name</label>
+                <input type="text" name="guestName" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rating (1-5)</label>
+                <input type="number" name="rating" class="form-input" min="1" max="5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <input type="text" name="platform" class="form-input" placeholder="e.g. Airbnb, Booking.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Checkout Date</label>
+                <input type="date" name="checkoutDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-textarea"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    await loadReviewsDropdown();
+    await loadReviews();
   }
 
+  async function loadReviewsDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      const select = document.getElementById('reviewPropertySelect');
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => {
+        html += `<option value="${doc.id}">${doc.data().propertyName}</option>`;
+      });
+      select.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadReviews() {
+    try {
+      const snap = await db.collection('reviews').orderBy('createdAt','desc').get();
+      const container = document.getElementById('reviewsList');
+      if (snap.empty) {
+        container.innerHTML = '<p style="text-align:center;padding:3rem;color:var(--color-text-secondary);">No reviews yet</p>';
+        return;
+      }
+
+      const propsSnap = await db.collection('properties').get();
+      const propsMap = {};
+      propsSnap.forEach(doc => propsMap[doc.id] = doc.data().propertyName);
+
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const ratingBadge = d.rating <= 2 ? 'danger' : d.rating >= 4 ? 'success' : 'warning';
+        const propertyName = propsMap[d.propertyId] || 'Unknown';
+        const checkoutStr = d.checkoutDate?.toDate?.() ? d.checkoutDate.toDate().toLocaleDateString('en-US', {month:'short', day:'numeric'}) : 'N/A';
+
+        html += `
+          <div class="card" style="border-left: 4px solid ${ratingBadge === 'danger' ? 'var(--color-danger)' : ratingBadge === 'success' ? 'var(--color-success)' : 'var(--color-warning)'};">
+            <div style="display:flex;justify-content:space-between;align-items:start; margin-bottom:1rem;">
+              <div>
+                <strong>${d.guestName || 'Anonymous'}</strong>
+                <div style="font-size:0.85rem; color:var(--color-text-secondary); margin-top:0.25rem;">${propertyName}</div>
+              </div>
+              <span class="badge badge-${ratingBadge}">${d.rating}/5⭐</span>
+            </div>
+            <p style="margin: 0.5rem 0 1rem; line-height:1.5;">${d.comment || '—'}</p>
+            <div style="font-size:0.85rem; color:var(--color-text-secondary);">
+              ${d.platform} • ${checkoutStr}
+            </div>
+            <button class="btn btn-danger" onclick="deleteReview('${doc.id}')" style="margin-top:1rem;">Delete</button>
+          </div>`;
+      });
+      container.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function openReviewModal() {
+    document.getElementById('reviewModal').classList.add('active');
+  }
+
+  function closeReviewModal() {
+    document.getElementById('reviewModal').classList.remove('active');
+    document.getElementById('reviewForm')?.reset();
+  }
+
+  async function saveReview(e) {
+    e.preventDefault();
+    const form = e.target;
+    const propertyId = document.getElementById('reviewPropertySelect').value;
+    if (!propertyId) {
+      alert('Please select a property');
+      return;
+    }
+
+    try {
+      const rating = Number(form.rating.value);
+      const checkoutDateStr = form.checkoutDate.value;
+      const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(checkoutDateStr));
+      const reviewMonth = checkoutDateStr.substring(0, 7);
+
+      await db.collection('reviews').add({
+        propertyId: propertyId,
+        guestName: form.guestName.value.trim(),
+        rating: rating,
+        platform: form.platform.value || 'Direct',
+        comment: form.comment.value.trim(),
+        checkoutDate: checkoutDate,
+        reviewMonth: reviewMonth,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      const propDoc = await db.collection('properties').doc(propertyId).get();
+      const currentData = propDoc.data();
+      const oldCount = currentData.totalReviews || 0;
+      const oldRating = currentData.averageRating || 0;
+      const newCount = oldCount + 1;
+      const newRating = ((oldRating * oldCount) + rating) / newCount;
+      
+      await db.collection('properties').doc(propertyId).update({
+        totalReviews: newCount,
+        averageRating: Math.round(newRating * 10) / 10
+      });
+
+      closeReviewModal();
+      await renderReviewsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function deleteReview(id) {
+    if (!confirm("Delete review?")) return;
+    try {
+      const reviewDoc = await db.collection('reviews').doc(id).get();
+      const propertyId = reviewDoc.data().propertyId;
+      await db.collection('reviews').doc(id).delete();
+
+      if (propertyId) {
+        const reviewsSnap = await db.collection('reviews').where('propertyId', '==', propertyId).get();
+        if (reviewsSnap.empty) {
+          await db.collection('properties').doc(propertyId).update({ totalReviews: 0, averageRating: 0 });
+        } else {
+          let totalRating = 0;
+          reviewsSnap.forEach(doc => totalRating += Number(doc.data().rating) || 0);
+          const newRating = Math.round((totalRating / reviewsSnap.size) * 10) / 10;
+          await db.collection('properties').doc(propertyId).update({
+            totalReviews: reviewsSnap.size,
+            averageRating: newRating
+          });
+        }
+      }
+      await renderReviewsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Delete failed");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // ACTION PLANS PAGE
+  // ─────────────────────────────────────────────
   async function renderActionsPage(container) {
-    container.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    container.innerHTML = `
+      <div class="page-header"><h1 class="page-title">Action Plans</h1></div>
+      <button class="btn btn-primary" onclick="openActionModal()" style="margin-bottom:1.5rem;">+ Create Action</button>
+      <div id="actionsList"></div>
+
+      <div id="actionModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">New Action Plan</h3>
+            <button class="modal-close" onclick="closeActionModal()">×</button>
+          </div>
+          <form id="actionForm" onsubmit="saveAction(event)">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Property</label>
+                <select id="actionPropertySelect" class="form-select" required>
+                  <option value="">Select Property...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Issue</label>
+                <input type="text" name="issue" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Assigned To</label>
+                <input type="text" name="assignedTo" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-textarea" required></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeActionModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    await loadActionsDropdown();
+    await loadActions();
   }
 
+  async function loadActionsDropdown() {
+    try {
+      const snap = await db.collection('properties').get();
+      const select = document.getElementById('actionPropertySelect');
+      let html = '<option value="">Select Property...</option>';
+      snap.forEach(doc => html += `<option value="${doc.id}">${doc.data().propertyName}</option>`);
+      select.innerHTML = html;
+    } catch (err) { console.error(err); }
+  }
+
+  async function loadActions() {
+    try {
+      const snap = await db.collection('actionPlans').get();
+      const container = document.getElementById('actionsList');
+      if (snap.empty) {
+        container.innerHTML = '<p style="text-align:center;padding:3rem;color:var(--color-text-secondary);">No actions yet</p>';
+        return;
+      }
+      const propsSnap = await db.collection('properties').get();
+      const propsMap = {};
+      propsSnap.forEach(doc => propsMap[doc.id] = doc.data().propertyName);
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const propName = propsMap[d.propertyId] || 'Unknown';
+        html += `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;">
+              <div>
+                <strong>${propName}</strong>
+                <div style="font-size:0.9rem; margin-top:0.25rem;">${d.issue}</div>
+              </div>
+              <button class="btn btn-danger" onclick="deleteAction('${doc.id}')">Delete</button>
+            </div>
+            <div style="margin-top:1rem; font-size:0.85rem;">Assigned: ${d.assignedTo}</div>
+            <p style="margin-top:0.75rem;">${d.description}</p>
+          </div>`;
+      });
+      container.innerHTML = html;
+    } catch (err) { console.error(err); }
+  }
+
+  function openActionModal() { document.getElementById('actionModal').classList.add('active'); }
+  function closeActionModal() {
+    document.getElementById('actionModal').classList.remove('active');
+    document.getElementById('actionForm')?.reset();
+  }
+
+  async function saveAction(e) {
+    e.preventDefault();
+    const form = e.target;
+    const propertyId = document.getElementById('actionPropertySelect').value;
+    if (!propertyId) { alert('Please select a property'); return; }
+    try {
+      await db.collection('actionPlans').add({
+        propertyId: propertyId,
+        issue: form.issue.value.trim(),
+        assignedTo: form.assignedTo.value.trim(),
+        description: form.description.value.trim(),
+        status: 'Pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeActionModal();
+      await renderActionsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function deleteAction(id) {
+    if (!confirm("Delete action?")) return;
+    try {
+      await db.collection('actionPlans').doc(id).delete();
+      await renderActionsPage(document.getElementById('mainContent'));
+    } catch (err) {
+      alert("Delete failed");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // IMPORT HOSTAWAY PAGE
+  // ─────────────────────────────────────────────
   function renderImportPage(container) {
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">📥 Import Hostaway Reviews</h1>
-        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Auto-converts ratings (10→5), maps columns, filters empty reviews</p>
+        <p style="color:var(--color-text-secondary); margin-top:0.5rem;">Upload your Hostaway CSV and we'll automatically process, analyze, and upload all reviews</p>
       </div>
 
       <div class="step-indicator">
@@ -770,55 +1391,47 @@
         </div>
         <div class="step" onclick="goToImportStep(4)">
           <div class="step-number">4</div>
-          <div class="step-title">Upload</div>
+          <div class="step-title">Confirm</div>
         </div>
       </div>
 
+      <!-- STEP 1 -->
       <div id="importStep1" class="import-step active">
         <div class="card">
           <h3 style="margin-bottom: 1.5rem;">Step 1: Upload Hostaway CSV</h3>
           <div class="upload-area" onclick="document.getElementById('fileInput').click()">
             <p style="font-size: 2rem; margin-bottom: 0.5rem;">📁</p>
-            <p style="font-weight: 600; margin-bottom: 0.5rem;">Click to upload Hostaway CSV</p>
-            <p style="font-size: 0.9rem; color: var(--color-text-secondary);">(.csv, .xlsx)</p>
+            <p style="font-weight: 600; margin-bottom: 0.5rem;">Click to upload CSV file</p>
+            <p style="font-size: 0.9rem; color: var(--color-text-secondary);">Export from Hostaway Dashboard</p>
           </div>
-          <input type="file" id="fileInput" hidden accept=".xlsx,.xls,.csv" onchange="handleImportFileUpload(event)">
-          <div style="margin-top: 1.5rem; padding: 1rem; background: var(--color-bg-secondary); border-radius: 8px;">
-            <h4 style="margin-bottom: 1rem;">✅ Auto-detects Hostaway columns:</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.9rem;">
-              <div><strong>"Guest name"</strong> → guest_name</div>
-              <div><strong>"Listing Name"</strong> → listing_name</div>
-              <div><strong>"Channel"</strong> → channel</div>
-              <div><strong>"Check-out"</strong> → checkout_date</div>
-              <div><strong>"Rating"</strong> (1-10) → <span style="color: var(--color-success);">converted to 1-5</span></div>
-              <div><strong>"Overall review"</strong> → comment</div>
-            </div>
-          </div>
-          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+          <input type="file" id="fileInput" hidden accept=".csv,.xlsx,.xls" onchange="handleImportFileUpload(event)">
+          <div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
             <button class="btn btn-secondary" onclick="navigateTo('reviews')">Cancel</button>
             <button class="btn btn-primary" id="importStep1NextBtn" disabled onclick="goToImportStep(2)">Next</button>
           </div>
         </div>
       </div>
 
+      <!-- STEP 2 -->
       <div id="importStep2" class="import-step">
         <div class="card">
-          <h3 style="margin-bottom: 1.5rem;">Step 2: Processing</h3>
+          <h3 style="margin-bottom: 1.5rem;">Step 2: Processing Reviews</h3>
           <div class="progress-bar">
-            <div class="progress-fill" id="importProgressFill" style="width: 0%;"></div>
+            <div class="progress-fill" id="importProgressFill"></div>
           </div>
-          <p id="importProgressText" style="text-align: center; margin-bottom: 1rem;">Preparing...</p>
-          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+          <p id="importProgressText" style="text-align: center; margin-bottom: 1.5rem;">Analyzing data...</p>
+          <div style="display: flex; justify-content: space-between;">
             <button class="btn btn-secondary" onclick="goToImportStep(1)">Back</button>
             <button class="btn btn-primary" id="importStep2NextBtn" disabled onclick="goToImportStep(3)">Next</button>
           </div>
         </div>
       </div>
 
+      <!-- STEP 3 -->
       <div id="importStep3" class="import-step">
         <div class="card">
           <h3 style="margin-bottom: 1.5rem;">Step 3: Review Data</h3>
-          <div style="overflow-x: auto;">
+          <div style="overflow-x:auto;">
             <table class="import-table">
               <thead>
                 <tr>
@@ -826,48 +1439,46 @@
                   <th>Property</th>
                   <th>Rating</th>
                   <th>Platform</th>
-                  <th>Checkout</th>
                   <th>Comment</th>
                 </tr>
               </thead>
               <tbody id="importTableBody"></tbody>
             </table>
           </div>
-          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+          <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
             <button class="btn btn-secondary" onclick="goToImportStep(2)">Back</button>
             <button class="btn btn-primary" onclick="goToImportStep(4)">Next</button>
           </div>
         </div>
       </div>
 
+      <!-- STEP 4 -->
       <div id="importStep4" class="import-step">
         <div class="card">
-          <h3 style="margin-bottom: 1.5rem;">Step 4: Upload to Firebase</h3>
-          <p style="margin-bottom: 1rem; color: var(--color-text-secondary);">Ready to import:</p>
+          <h3 style="margin-bottom: 1.5rem;">Step 4: Upload to Dashboard</h3>
           <div style="padding: 1rem; background: var(--color-bg-secondary); border-radius: 8px; margin-bottom: 1.5rem;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
               <div>
                 <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Reviews</div>
-                <div style="font-size: 1.5rem; font-weight: 700;" id="importSummaryCount">0</div>
+                <div style="font-size: 1.8rem; font-weight: 700;" id="importSummaryCount">0</div>
               </div>
               <div>
                 <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Avg Rating</div>
-                <div style="font-size: 1.5rem; font-weight: 700;" id="importSummaryAvgRating">—</div>
+                <div style="font-size: 1.8rem; font-weight: 700;" id="importSummaryAvgRating">—</div>
               </div>
             </div>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" id="importUploadProgressFill" style="width: 0%;"></div>
+            <div class="progress-fill" id="importUploadProgressFill"></div>
           </div>
-          <p id="importUploadStatusText" style="text-align: center; margin-bottom: 1rem;">Ready</p>
-          <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+          <p id="importUploadStatusText" style="text-align: center; margin-bottom: 1.5rem; color: var(--color-text-secondary);">Ready to upload</p>
+          <div style="display: flex; justify-content: space-between;">
             <button class="btn btn-secondary" onclick="goToImportStep(3)">Back</button>
-            <button class="btn btn-primary" id="importUploadBtn" onclick="importReviewsNow()">Upload All</button>
+            <button class="btn btn-primary" id="importUploadBtn" onclick="importReviewsNow()">🚀 Upload All Reviews</button>
           </div>
         </div>
       </div>
     `;
-    populateImportActionPropertyDropdown();
   }
 
   function goToImportStep(step) {
@@ -877,13 +1488,9 @@
     document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
     document.querySelector(`.step:nth-child(${step})`).classList.add('active');
 
-    if (step === 2) {
-      processImportReviews();
-    } else if (step === 3) {
-      populateImportTable();
-    } else if (step === 4) {
-      populateImportSummary();
-    }
+    if (step === 2) processImportReviews();
+    else if (step === 3) populateImportTable();
+    else if (step === 4) populateImportSummary();
   }
 
   function handleImportFileUpload(event) {
@@ -903,99 +1510,71 @@
           return;
         }
 
-        importData = rawData.map(row => {
-          const mapped = {
-            guest_name: row['Guest name'] || row['guest_name'] || '',
-            listing_name: row['Listing Name'] || row['listing_name'] || '',
-            channel: row['Channel'] || row['channel'] || 'Direct',
-            checkout_date: row['Check-out'] || row['checkout_date'] || '',
-            rating: row['Rating'] || row['rating'] || 0,
-            review_comment: row['Overall review'] || row['review_comment'] || ''
+        // Filter rows with rating or review
+        importData = rawData.filter(row => {
+          return (row['Rating'] && row['Rating'] !== '') || 
+                 (row['Overall review'] && row['Overall review'] !== '');
+        }).map(row => {
+          // Map Hostaway columns to standard format
+          const rating = row['Rating'] ? Number(row['Rating']) : 0;
+          // Convert 1-10 scale to 1-5
+          const normalized = rating > 5 ? Math.round((rating / 10) * 5 * 2) / 2 : rating;
+          
+          return {
+            guest_name: row['Guest name'] || 'Anonymous',
+            listing_name: row['Listing Name'] || 'Unknown',
+            channel: (row['Channel'] || 'Direct').toLowerCase(),
+            checkout_date: row['Check-out'] ? row['Check-out'].split(' ')[0] : '',
+            rating: normalized,
+            review_comment: row['Overall review'] || ''
           };
-
-          if (mapped.channel.toLowerCase() === 'homeaway') {
-            mapped.channel = 'Vrbo';
-          } else if (mapped.channel.toLowerCase() === 'bookingcom') {
-            mapped.channel = 'Booking.com';
-          } else if (mapped.channel.toLowerCase() === 'airbnb') {
-            mapped.channel = 'Airbnb';
-          }
-
-          return mapped;
-        }).filter(row => {
-          const hasRating = row.rating && Number(row.rating) > 0;
-          const hasComment = row.review_comment && row.review_comment.trim().length > 0;
-          return hasRating || hasComment;
         });
 
         if (importData.length === 0) {
-          alert('No valid reviews found');
+          alert('No reviews with ratings found');
           return;
         }
 
         document.getElementById('importStep1NextBtn').disabled = false;
-        alert(`✓ Loaded ${importData.length} reviews (filtered from ${rawData.length} rows)`);
+        alert(`✓ Loaded ${importData.length} reviews from Hostaway`);
       } catch (err) {
-        alert('Error reading file: ' + err.message);
+        alert('Error: ' + err.message);
       }
     };
     reader.readAsArrayBuffer(file);
   }
 
   function processImportReviews() {
-    const progressFill = document.getElementById('importProgressFill');
-    const progressText = document.getElementById('importProgressText');
+    const fill = document.getElementById('importProgressFill');
+    const text = document.getElementById('importProgressText');
 
     processedReviews = [];
     let completed = 0;
 
-    progressText.textContent = 'Processing...';
-
     importData.forEach((review, idx) => {
       setTimeout(() => {
-        const guestName = review.guest_name || 'Anonymous';
-        const listingName = review.listing_name || 'Unknown';
-        const rawRating = Number(review.rating) || 0;
-
-        const rating = rawRating > 5 ? Math.round((rawRating / 2) * 10) / 10 : rawRating;
-
-        const comment = review.review_comment || '';
-
         let sentiment = 'Neutral';
-        const positiveWords = ['excellent', 'amazing', 'great', 'perfect', 'wonderful', 'love', 'best'];
-        const negativeWords = ['bad', 'awful', 'terrible', 'worst', 'hate', 'dirty', 'noisy', 'broken'];
+        const posWords = ['excellent','amazing','great','perfect','wonderful','love','best','lovely','spacious','friendly','nice','good'];
+        const negWords = ['bad','awful','terrible','worst','hate','dirty','noisy','broken','poor','problem','issue'];
+        
+        const commentLower = review.review_comment.toLowerCase();
+        const hasPos = posWords.some(w => commentLower.includes(w));
+        const hasNeg = negWords.some(w => commentLower.includes(w));
 
-        const commentLower = comment.toLowerCase();
-        const hasPositive = positiveWords.some(word => commentLower.includes(word));
-        const hasNegative = negativeWords.some(word => commentLower.includes(word));
+        if (hasPos && !hasNeg) sentiment = 'Positive';
+        else if (hasNeg && !hasPos) sentiment = 'Negative';
+        else if (review.rating >= 4) sentiment = 'Positive';
+        else if (review.rating <= 2) sentiment = 'Negative';
 
-        if (hasPositive && !hasNegative) sentiment = 'Positive';
-        else if (hasNegative && !hasPositive) sentiment = 'Negative';
-        else if (rating >= 4) sentiment = 'Positive';
-        else if (rating <= 2) sentiment = 'Negative';
-
-        let checkoutDate = review.checkout_date || '';
-        if (checkoutDate && typeof checkoutDate === 'string') {
-          checkoutDate = checkoutDate.split(' ')[0];
-        }
-
-        processedReviews.push({
-          guestName,
-          listingName,
-          channel: review.channel || 'Direct',
-          checkoutDate,
-          rating,
-          comment,
-          sentiment
-        });
+        processedReviews.push({...review, sentiment});
 
         completed++;
-        const progress = Math.round((completed / importData.length) * 100);
-        progressFill.style.width = progress + '%';
-        progressText.textContent = `Processing... ${progress}%`;
+        const pct = Math.round((completed / importData.length) * 100);
+        fill.style.width = pct + '%';
+        text.textContent = `Processing... ${pct}%`;
 
         if (completed === importData.length) {
-          progressText.textContent = '✓ Complete!';
+          text.textContent = '✓ Done! Click Next';
           document.getElementById('importStep2NextBtn').disabled = false;
         }
       }, idx * 50);
@@ -1004,83 +1583,65 @@
 
   function populateImportTable() {
     const tbody = document.getElementById('importTableBody');
-    tbody.innerHTML = '';
-
-    processedReviews.forEach((review) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${review.guestName}</td>
-        <td>${review.listingName}</td>
-        <td>${review.rating}/5</td>
-        <td>${review.channel}</td>
-        <td>${review.checkoutDate || 'N/A'}</td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${review.comment || '—'}</td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
-
-  async function populateImportActionPropertyDropdown() {
-    try {
-      const snap = await db.collection('properties').get();
-      window.importPropertiesMap = {};
-      snap.forEach(doc => {
-        window.importPropertiesMap[doc.data().propertyName] = doc.id;
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    tbody.innerHTML = processedReviews.map(r => `
+      <tr>
+        <td>${r.guest_name}</td>
+        <td>${r.listing_name}</td>
+        <td>${r.rating}/5</td>
+        <td>${r.channel}</td>
+        <td style="max-width:200px; overflow:hidden;">${r.review_comment || '—'}</td>
+      </tr>
+    `).join('');
   }
 
   function populateImportSummary() {
-    const totalCount = processedReviews.length;
-    let totalRating = 0;
-    processedReviews.forEach(r => totalRating += r.rating);
-    const avgRating = totalCount > 0 ? (totalRating / totalCount).toFixed(1) : 0;
+    const total = processedReviews.length;
+    let sumRating = processedReviews.reduce((sum, r) => sum + r.rating, 0);
+    const avg = total > 0 ? (sumRating / total).toFixed(1) : 0;
 
-    document.getElementById('importSummaryCount').textContent = totalCount;
-    document.getElementById('importSummaryAvgRating').textContent = avgRating + '⭐';
+    document.getElementById('importSummaryCount').textContent = total;
+    document.getElementById('importSummaryAvgRating').textContent = avg + '⭐';
   }
 
   async function importReviewsNow() {
-    const uploadBtn = document.getElementById('importUploadBtn');
-    const uploadProgressFill = document.getElementById('importUploadProgressFill');
-    const uploadStatusText = document.getElementById('importUploadStatusText');
+    const btn = document.getElementById('importUploadBtn');
+    const fill = document.getElementById('importUploadProgressFill');
+    const text = document.getElementById('importUploadStatusText');
 
-    uploadBtn.disabled = true;
-    uploadStatusText.textContent = 'Uploading...';
+    btn.disabled = true;
+    text.textContent = 'Uploading...';
 
     let uploaded = 0;
+    const propsSnap = await db.collection('properties').get();
+    const propsMap = {};
+    propsSnap.forEach(doc => propsMap[doc.data().propertyName] = doc.id);
 
     for (let review of processedReviews) {
       try {
-        let propertyId = window.importPropertiesMap[review.listingName];
-
+        let propertyId = propsMap[review.listing_name];
+        
         if (!propertyId) {
-          const newPropRef = await db.collection('properties').add({
-            propertyName: review.listingName,
-            location: '',
+          const newProp = await db.collection('properties').add({
+            propertyName: review.listing_name,
             city: '',
             unitType: 'Studio',
-            platform: review.channel,
-            owner: 'Imported',
             totalReviews: 0,
             averageRating: 0,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
-          propertyId = newPropRef.id;
-          window.importPropertiesMap[review.listingName] = propertyId;
+          propertyId = newProp.id;
+          propsMap[review.listing_name] = propertyId;
         }
 
-        const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(review.checkoutDate || new Date()));
-        const reviewMonth = (review.checkoutDate || new Date().toISOString().substring(0, 7)).substring(0, 7);
+        const checkoutDate = firebase.firestore.Timestamp.fromDate(new Date(review.checkout_date || new Date()));
+        const reviewMonth = (review.checkout_date || new Date().toISOString()).substring(0, 7);
 
         await db.collection('reviews').add({
           propertyId: propertyId,
-          guestName: review.guestName,
+          guestName: review.guest_name,
           rating: review.rating,
           platform: review.channel,
-          comment: review.comment,
+          comment: review.review_comment,
           checkoutDate: checkoutDate,
           reviewMonth: reviewMonth,
           sentiment: review.sentiment,
@@ -1088,36 +1649,54 @@
         });
 
         const propDoc = await db.collection('properties').doc(propertyId).get();
-        const currentData = propDoc.data();
-        const oldCount = currentData.totalReviews || 0;
-        const oldRating = currentData.averageRating || 0;
+        const pData = propDoc.data();
+        const oldCount = pData.totalReviews || 0;
+        const oldRating = pData.averageRating || 0;
         const newCount = oldCount + 1;
         const newRating = ((oldRating * oldCount) + review.rating) / newCount;
-
+        
         await db.collection('properties').doc(propertyId).update({
           totalReviews: newCount,
           averageRating: Math.round(newRating * 10) / 10
         });
 
         uploaded++;
-        const progress = Math.round((uploaded / processedReviews.length) * 100);
-        uploadProgressFill.style.width = progress + '%';
-        uploadStatusText.textContent = `Uploading... ${uploaded}/${processedReviews.length}`;
+        const pct = Math.round((uploaded / processedReviews.length) * 100);
+        fill.style.width = pct + '%';
+        text.textContent = `Uploading ${uploaded}/${processedReviews.length}...`;
 
       } catch (err) {
-        console.error('Upload error:', err);
+        console.error('Error uploading:', err);
       }
     }
 
-    uploadProgressFill.style.width = '100%';
-    uploadStatusText.textContent = `✓ Successfully imported ${uploaded} reviews!`;
-    uploadBtn.textContent = 'Done! Go to Reviews';
-    uploadBtn.onclick = () => navigateTo('reviews');
+    fill.style.width = '100%';
+    text.textContent = `✓ Uploaded ${uploaded} reviews successfully!`;
+    btn.textContent = 'Done! Go to Reviews';
+    btn.disabled = false;
+    btn.onclick = () => navigateTo('reviews');
   }
 
-  function applyDateFilter() {}
-  function clearDateFilter() {}
-  function filterProperties() {}
+  // ─────────────────────────────────────────────
+  // UTILITIES
+  // ─────────────────────────────────────────────
+  function applyDateFilter() {
+    dateFilterFrom = document.getElementById('dateFrom').value;
+    dateFilterTo = document.getElementById('dateTo').value;
+    if (dateFilterFrom && dateFilterTo) {
+      navigateTo('dashboard');
+    } else {
+      alert('Please select both dates');
+    }
+  }
+
+  function clearDateFilter() {
+    dateFilterFrom = null;
+    dateFilterTo = null;
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    navigateTo('dashboard');
+  }
 
   async function init() {
     loadTheme();
@@ -1134,6 +1713,20 @@
   window.toggleTheme = toggleTheme;
   window.handleLogin = handleLogin;
   window.handleLogout = handleLogout;
+  window.applyDateFilter = applyDateFilter;
+  window.clearDateFilter = clearDateFilter;
+  window.openPropertyModal = openPropertyModal;
+  window.closePropertyModal = closePropertyModal;
+  window.saveProperty = saveProperty;
+  window.deleteProperty = deleteProperty;
+  window.openReviewModal = openReviewModal;
+  window.closeReviewModal = closeReviewModal;
+  window.saveReview = saveReview;
+  window.deleteReview = deleteReview;
+  window.openActionModal = openActionModal;
+  window.closeActionModal = closeActionModal;
+  window.saveAction = saveAction;
+  window.deleteAction = deleteAction;
   window.goToImportStep = goToImportStep;
   window.handleImportFileUpload = handleImportFileUpload;
   window.importReviewsNow = importReviewsNow;
