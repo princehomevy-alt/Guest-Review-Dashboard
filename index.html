@@ -2146,6 +2146,282 @@
     }
   }
 
+// ─────────────────────────────────────────────
+// CUSTOMER CARE COMMAND CENTER (UPGRADED)
+// ─────────────────────────────────────────────
+async function renderSupportPage(container) {
+  container.innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">Customer Care Command Center</h1>
+      <p class="page-subtitle">Real-time performance, SLA tracking, and team accountability</p>
+    </div>
+
+    <div id="supportContent">
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading data...</span>
+      </div>
+    </div>
+  `;
+
+  // SLA CONFIG (adjust based on your operation)
+  const SLA_RESPONSE_LIMIT = 1; // hours
+  const SLA_RESOLUTION_LIMIT = 24; // hours
+
+  try {
+    const snapshot = await db.collection('supportTickets').get();
+    let tickets = [];
+    snapshot.forEach(doc => tickets.push({ id: doc.id, ...doc.data() }));
+
+    // ─────────────────────────────────────────
+    // METRICS INITIALIZATION
+    // ─────────────────────────────────────────
+    let metrics = {
+      total: tickets.length,
+      open: 0,
+      pending: 0,
+      resolved: 0,
+      escalated: 0,
+      slaBreached: 0,
+
+      avgResponse: 0,
+      avgResolution: 0,
+      avgSatisfaction: 0,
+
+      byAgent: {},
+      byCategory: {},
+      trends: {}
+    };
+
+    let totalResponse = 0, responseCount = 0;
+    let totalResolution = 0, resolutionCount = 0;
+    let totalSatisfaction = 0, satisfactionCount = 0;
+
+    // ─────────────────────────────────────────
+    // PROCESS DATA
+    // ─────────────────────────────────────────
+    tickets.forEach(ticket => {
+
+      // STATUS
+      if (ticket.status === 'Open') metrics.open++;
+      if (ticket.status === 'Pending') metrics.pending++;
+      if (ticket.status === 'Resolved') metrics.resolved++;
+
+      // PRIORITY
+      if (ticket.priority === 'High') metrics.escalated++;
+
+      // RESPONSE TIME
+      if (ticket.responseTime) {
+        totalResponse += ticket.responseTime;
+        responseCount++;
+
+        if (ticket.responseTime > SLA_RESPONSE_LIMIT) {
+          metrics.slaBreached++;
+        }
+      }
+
+      // RESOLUTION TIME
+      if (ticket.resolutionTime) {
+        totalResolution += ticket.resolutionTime;
+        resolutionCount++;
+
+        if (ticket.resolutionTime > SLA_RESOLUTION_LIMIT) {
+          metrics.slaBreached++;
+        }
+      }
+
+      // SATISFACTION
+      if (ticket.satisfaction) {
+        totalSatisfaction += ticket.satisfaction;
+        satisfactionCount++;
+      }
+
+      // AGENT PERFORMANCE
+      const agent = ticket.teamMember || 'Unassigned';
+
+      if (!metrics.byAgent[agent]) {
+        metrics.byAgent[agent] = {
+          tickets: 0,
+          responseSum: 0,
+          resolutionSum: 0,
+          satisfactionSum: 0,
+          responseCount: 0,
+          resolutionCount: 0,
+          satisfactionCount: 0
+        };
+      }
+
+      let a = metrics.byAgent[agent];
+      a.tickets++;
+
+      if (ticket.responseTime) {
+        a.responseSum += ticket.responseTime;
+        a.responseCount++;
+      }
+
+      if (ticket.resolutionTime) {
+        a.resolutionSum += ticket.resolutionTime;
+        a.resolutionCount++;
+      }
+
+      if (ticket.satisfaction) {
+        a.satisfactionSum += ticket.satisfaction;
+        a.satisfactionCount++;
+      }
+
+      // CATEGORY
+      const category = ticket.ticketCategory || 'Other';
+      metrics.byCategory[category] = (metrics.byCategory[category] || 0) + 1;
+
+      // TREND (by day)
+      if (ticket.createdAt) {
+        const day = new Date(ticket.createdAt).toLocaleDateString();
+        metrics.trends[day] = (metrics.trends[day] || 0) + 1;
+      }
+    });
+
+    // ─────────────────────────────────────────
+    // FINAL CALCULATIONS
+    // ─────────────────────────────────────────
+    metrics.avgResponse = responseCount ? (totalResponse / responseCount).toFixed(2) : 0;
+    metrics.avgResolution = resolutionCount ? (totalResolution / resolutionCount).toFixed(2) : 0;
+    metrics.avgSatisfaction = satisfactionCount ? (totalSatisfaction / satisfactionCount).toFixed(2) : 0;
+
+    const slaCompliance = metrics.total 
+      ? Math.round(((metrics.total - metrics.slaBreached) / metrics.total) * 100)
+      : 0;
+
+    // AGENT FINAL METRICS
+    Object.keys(metrics.byAgent).forEach(agent => {
+      let a = metrics.byAgent[agent];
+
+      a.avgResponse = a.responseCount ? (a.responseSum / a.responseCount).toFixed(2) : 0;
+      a.avgResolution = a.resolutionCount ? (a.resolutionSum / a.resolutionCount).toFixed(2) : 0;
+      a.avgSatisfaction = a.satisfactionCount ? (a.satisfactionSum / a.satisfactionCount).toFixed(2) : 0;
+    });
+
+    // SORT AGENTS (BEST TO WORST)
+    const sortedAgents = Object.entries(metrics.byAgent)
+      .sort((a, b) => a[1].avgResponse - b[1].avgResponse);
+
+    // ─────────────────────────────────────────
+    // UI RENDER
+    // ─────────────────────────────────────────
+    let html = `
+      <div class="grid grid-4">
+        <div class="metric-card">
+          <div>Total Tickets</div>
+          <strong>${metrics.total}</strong>
+        </div>
+        <div class="metric-card">
+          <div>Open</div>
+          <strong>${metrics.open}</strong>
+        </div>
+        <div class="metric-card">
+          <div>Escalations</div>
+          <strong>${metrics.escalated}</strong>
+        </div>
+        <div class="metric-card">
+          <div>SLA Compliance</div>
+          <strong>${slaCompliance}%</strong>
+        </div>
+      </div>
+
+      <div class="grid grid-4">
+        <div class="metric-card">
+          <div>Avg Response</div>
+          <strong>${metrics.avgResponse}h</strong>
+        </div>
+        <div class="metric-card">
+          <div>Avg Resolution</div>
+          <strong>${metrics.avgResolution}h</strong>
+        </div>
+        <div class="metric-card">
+          <div>Satisfaction</div>
+          <strong>${metrics.avgSatisfaction}⭐</strong>
+        </div>
+        <div class="metric-card">
+          <div>Pending</div>
+          <strong>${metrics.pending}</strong>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Team Performance</h3>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Tickets</th>
+              <th>Response</th>
+              <th>Resolution</th>
+              <th>Satisfaction</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              sortedAgents.map(([name, a]) => `
+                <tr>
+                  <td>${name}</td>
+                  <td>${a.tickets}</td>
+                  <td>${a.avgResponse}h</td>
+                  <td>${a.avgResolution}h</td>
+                  <td>${a.avgSatisfaction}⭐</td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Tickets by Category</h3>
+          <canvas id="categoryChart"></canvas>
+        </div>
+        <div class="card">
+          <h3>Ticket Volume Trend</h3>
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('supportContent').innerHTML = html;
+
+    // ─────────────────────────────────────────
+    // CHARTS
+    // ─────────────────────────────────────────
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(metrics.byCategory),
+        datasets: [{
+          data: Object.values(metrics.byCategory)
+        }]
+      },
+      options: { responsive: true }
+    });
+
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: Object.keys(metrics.trends),
+        datasets: [{
+          data: Object.values(metrics.trends)
+        }]
+      },
+      options: { responsive: true }
+    });
+
+  } catch (err) {
+    document.getElementById('supportContent').innerHTML =
+      `<p style="color:red;">Error loading data</p>`;
+    console.error(err);
+  }
+}
+  
   // ─────────────────────────────────────────────
   // IMPORT REVIEWS PAGE
   // ─────────────────────────────────────────────
